@@ -67,6 +67,8 @@ local repo = 'https://raw.githubusercontent.com/mstudio45/Obsidian/main/'
 local Executor = identifyexecutor()  or getexecutorname() or "Unknown"
 local Library =  loadstring(game:HttpGet(repo..'Library.lua'))()
 
+Library.ForceCheckbox = true
+
 Library:Notify("正在加载Starring | Doors",5)
 
 if Executor == "Xeno" or Executor == "xeno" then Library:Notify("Not Supported Executor",3) return end
@@ -2641,7 +2643,7 @@ Bypass:AddToggle('GodMode',{
 if Value then
 if not Toggles.AntiHear.Value then
 Toggles.AntiHear:SetValue(true)
-Library:Notify("Automatically Enabled Anti-Figure Hearing Needs to enabld for godmode to work",3)
+Library:Notify("自动开启防飞哥听力功能只有这样上帝模式才能工作",3)
 end
 
 
@@ -2678,16 +2680,55 @@ end
 	})
 
 
-
-
-
+local AnticheatManipulationLoop = nil
+local AnticheatManipulationOrigin = nil
+local AnticheatManipulationEnabled = false
 
 Bypass:AddToggle('AnticheatManipulation',{
      Text = "纵轴穿墙",
-     Default = false
+     Default = false,
+     Callback = function(Value)
+        if Value then
+            AnticheatManipulationOrigin = LocalPlayer.Character.HumanoidRootPart.Position
+            AnticheatManipulationEnabled = true
+            
+            AnticheatManipulationLoop = task.spawn(function()
+                while AnticheatManipulationEnabled and Toggles.AnticheatManipulation.Value do
+                    if alive and AnticheatManipulationOrigin then
+                        local lookVector = LocalPlayer.Character.HumanoidRootPart.CFrame.LookVector
+                        
+                        local backwardPosition = LocalPlayer.Character.HumanoidRootPart.Position - lookVector * 10000
+                        Character:PivotTo(CFrame.new(backwardPosition))
+                        task.wait(0.03)
+                        
+                        local forwardPosition = AnticheatManipulationOrigin + lookVector * 1
+                        Character:PivotTo(CFrame.new(forwardPosition))
+                        
+                        AnticheatManipulationOrigin = forwardPosition
+                    end
+                    task.wait(0.07)
+                end
+                
+                if alive and AnticheatManipulationOrigin then
+                    Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
+                end
+            end)
+        else
+            AnticheatManipulationEnabled = false
+            
+            if AnticheatManipulationLoop then
+                task.cancel(AnticheatManipulationLoop)
+                AnticheatManipulationLoop = nil
+            end
+            
+            if alive and AnticheatManipulationOrigin then
+                Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
+            end
+            
+            AnticheatManipulationOrigin = nil
+        end
+     end
 }):AddKeyPicker('AnticheatManipulationKeybind', {
-
-
 		Default = 'H',
 		SyncToggleState = true,
 		Mode = 'Toggle',
@@ -2698,13 +2739,6 @@ Bypass:AddToggle('AnticheatManipulation',{
 		ChangedCallback = function(New)
 		end
 	})
-end
-
-
-
-
-
-
 
 
 FloorAnti:AddToggle('RankedAntiBanana',{
@@ -2767,7 +2801,7 @@ local AnchorHintFrame = MainUI:WaitForChild("AnchorHintFrame")
                 end
 
                 if not foundAnchor then
-                    task.wait() -- No anchor found, skip this loop
+                    task.wait()
                 end
 if foundAnchor then
                 local noteObj = foundAnchor:FindFirstChild("Note")
@@ -4161,7 +4195,7 @@ Lighting.Ambient = Color3.fromRGB(255, 255, 255)
 end
 
 
-if Options.GMDropdown and Options.GMDropdown.Value == "Automation" then
+if Options.GMDropdown and Options.GMDropdown.Value == "自动" then
 
 local Entitys = workspace:FindFirstChild("RushMoving") or workspace:FindFirstChild("AmbushMoving") or workspace:FindFirstChild("GlitchRush") or workspace:FindFirstChild("GlitchAmbush") or workspace:FindFirstChild("BackdoorRush")
 
@@ -4360,13 +4394,6 @@ RemoteFolder.MotorReplication:FireServer(-890)
 end
 
 end
-end
-end
-
-if Toggles.AnticheatManipulation and Toggles.AnticheatManipulation.Value then
-if alive then
-Character:PivotTo(LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 10000))
-
 end
 end
 
@@ -5136,7 +5163,7 @@ Connection:Disconnect()
 end
 
 Library:Unload()
-ESPLibrary:Unload() -- Nice
+ESPLibrary:Unload()
 
 
 if Character.HumanoidRootPart:FindFirstChild("FlyBodyVelocity") then
@@ -5354,6 +5381,20 @@ end
 
 
 end)
+
+    if AnticheatManipulationLoop then
+        task.cancel(AnticheatManipulationLoop)
+        AnticheatManipulationLoop = nil
+    end
+    
+    AnticheatManipulationEnabled = false
+    
+    if alive and AnticheatManipulationOrigin then
+        Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
+    end
+    
+    AnticheatManipulationOrigin = nil
+end
 
 LocalPlayer.CharacterAdded:Connect(function()
 
