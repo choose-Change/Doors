@@ -4796,7 +4796,7 @@ end
 
 if Toggles.Books.Value then
 if v.Name == "LiveHintBook" then
-AddESP(v,"Book",BooksColor)
+AddESP(v,"书",BooksColor)
 end
 end
 
