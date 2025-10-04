@@ -2916,7 +2916,7 @@ end
 
 
 FloorAnti:AddToggle('AnticheatBypass',{
-     Text = "Anticheat Bypass",
+     Text = "绕过反作弊",
      Default = false
 })
 Toggles.AnticheatBypass:OnChanged(function(Value)
