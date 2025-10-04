@@ -1718,7 +1718,7 @@ end
 	})
 
 Automation:AddDropdown("IgnoreList", {
-        Values = {"Jeff Item","Gold","Drops"},
+        Values = {"Jeff物品","金币","丢弃物品","故障方块"},
         Default = 1,
         Multi = true,
         Text = "忽略列表",
@@ -3512,7 +3512,7 @@ Bread = "面包",
 AlarmClock = "闹钟",
 RiftSmoothie = "月光奶昔",
 GweenSoda = "苏打水",
-GlitchCub = "故障方块",
+GlitchCube = "故障方块",
 RiftJar = "裂缝罐",
 Compass = "罗盘",
 Lantern = "手提灯",
@@ -4271,9 +4271,12 @@ end
 end
 if Base and (LocalPlayer.Character.HumanoidRootPart.Position - Base.Position).Magnitude < prompt.MaxActivationDistance then
 
-if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList.Value["Gold"] then return end
-if prompt.Parent:GetAttribute("JeffShop")  and Options.IgnoreList.Value["Jeff Items"] then return end
-if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList.Value["Drops"] then return end
+if prompt.Parent and prompt.Parent.Name == "GlitchCube" and Options.IgnoreList.Value["故障方块"] then
+    return
+end
+if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList.Value["金币"] then return end
+if prompt.Parent:GetAttribute("JeffShop")  and Options.IgnoreList.Value["Jeff物品"] then return end
+if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList.Value["丢弃物品"] then return end
 if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then return end
 if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then return end
 
