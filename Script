@@ -1718,7 +1718,7 @@ end
 	})
 
 Automation:AddDropdown("IgnoreList", {
-        Values = {"Jeff物品","金币","丢弃物品"},
+        Values = {"Jeff Item","Gold","Drops"},
         Default = 1,
         Multi = true,
         Text = "忽略列表",
