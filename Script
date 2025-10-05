@@ -581,7 +581,6 @@ Window = Library:CreateWindow({
 })
 
 Tabs = {
-	Main     = Window:AddTab('主页'),
   Player     = Window:AddTab('玩家'),
 	Exploits       = Window:AddTab('漏洞'),
 	Visuals       = Window:AddTab('视觉'),
@@ -595,30 +594,24 @@ Addons = Window:AddTab('插件'),
 
 
 AddonBox = Tabs.Addons:AddLeftGroupbox('插件')
-local TabBox2 = Tabs.Main:AddLeftTabbox() 
-
-local MiscBox = TabBox2:AddTab("杂项")
-local NotifyBox = TabBox2:AddTab("通知")
-
 
 local TabBox = Tabs.Player:AddLeftTabbox() 
 
 local Movement = TabBox:AddTab("移动")
 local Camera = TabBox:AddTab("相机")
 
-
+local MiscBox = Tabs.Player:AddLeftGroupbox("杂项")
 
 local TabBox3 = Tabs.Exploits:AddLeftTabbox() 
 
 local Anti = TabBox3:AddTab("实体")
-local  Bypass = TabBox3:AddTab("绕过")
+local Bypass = TabBox3:AddTab("绕过")
 
 
-Automation = Tabs.Exploits:AddRightGroupbox('自动化')
-InfiniteBox = Tabs.Player:AddRightGroupbox('无限物品')
+Automation = Tabs.Player:AddRightGroupbox('自动化')
+InfiniteBox = Tabs.Exploits:AddRightGroupbox('无限物品')
 
-
-local ReachBox = Tabs.Main:AddRightGroupbox('距离')
+local ReachBox = Tabs.Player:AddRightGroupbox('距离')
 
 
 
@@ -633,7 +626,7 @@ ModifiersBox = Tabs.Floor:AddLeftGroupbox('修饰符')
 
 FloorESP = Tabs.Floor:AddRightGroupbox('ESP')
 
-
+local NotifyBox = Tabs.Visuals:AddRightGroupbox('通知')
 
 ESP = Tabs.Visuals:AddRightGroupbox('ESP')
 SettingsESP = Tabs.Visuals:AddLeftGroupbox('设置')
@@ -2097,9 +2090,290 @@ end
 manageToggle("AutoCodeFire",   "Fire",Automation)
 manageToggle("AutoCodeNotify", "Notify",NotifyBox)
 
+local oxygenNotifyRunning = false
+local oxygenNotifyUI = nil
+local oxygenNotifyConnection = nil
+local oxygenHideTimer = nil
 
+NotifyBox:AddToggle('OxygenNotify',{
+     Text = "通知氧气",
+     Default = false,
+     Callback = function(Value)
+        if Value then
+            if not oxygenNotifyRunning then
+                oxygenNotifyRunning = true
+                
+                if not oxygenNotifyUI then
+                    oxygenNotifyUI = Instance.new("ScreenGui")
+                    oxygenNotifyUI.Name = "OxygenNotifyUI"
+                    oxygenNotifyUI.Parent = game:GetService("CoreGui")
+                    oxygenNotifyUI.ResetOnSpawn = false
+                    oxygenNotifyUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                    
+                    local frame = Instance.new("Frame")
+                    frame.Size = UDim2.new(0, 120, 0, 45)
+                    frame.Position = UDim2.new(0.5, -100, 0.8, -30)
+                    frame.AnchorPoint = Vector2.new(0.5, 0.5)
+                    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                    frame.BorderSizePixel = 0
+                    frame.BackgroundTransparency = 0.3
+                    frame.Parent = oxygenNotifyUI
+                    
+                    local corner = Instance.new("UICorner")
+                    corner.CornerRadius = UDim.new(0, 8)
+                    corner.Parent = frame
+                    
+                    local textLabel = Instance.new("TextLabel")
+                    textLabel.Size = UDim2.new(1, 0, 1, 0)
+                    textLabel.BackgroundTransparency = 1
+                    textLabel.Text = "氧气: 100%"
+                    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    textLabel.TextSize = 18
+                    textLabel.Font = Enum.Font.Gotham
+                    textLabel.Parent = frame
+                    
+                    oxygenNotifyUI.Enabled = false
+                end
+                
+                local function updateOxygenDisplay(oxygenValue)
+                    if oxygenNotifyUI and oxygenNotifyUI:FindFirstChildOfClass("Frame") then
+                        local frame = oxygenNotifyUI:FindFirstChildOfClass("Frame")
+                        local textLabel = frame:FindFirstChildOfClass("TextLabel")
+                        
+                        if textLabel then
+                            textLabel.Text = "氧气: " .. tostring(math.floor(oxygenValue)) .. "%"
+                            
+                            if oxygenValue < 30 then
+                                textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+                            elseif oxygenValue < 60 then
+                                textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
+                            else
+                                textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            end
+                        end
+                    end
+                end
+                
+                local function checkOxygen(character)
+                    if not character then
+                        character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                    end
+                    
+                    if not character then return nil end
+                    
+                    local oxygenValue = character:GetAttribute("Oxygen")
+                    if oxygenValue then
+                        return oxygenValue
+                    end
+                    
+                    local oxygenObj = character:FindFirstChild("Oxygen")
+                    if oxygenObj and oxygenObj:IsA("NumberValue") then
+                        return oxygenObj.Value
+                    end
+                    
+                    return nil
+                end
+                
+                oxygenNotifyConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                    if not oxygenNotifyRunning then
+                        return
+                    end
+                    
+                    local character = LocalPlayer.Character
+                    
+                    if not character then
+                        oxygenNotifyUI.Enabled = false
+                        return
+                    end
+                    
+                    local oxygenValue = checkOxygen(character)
+                    
+                    if oxygenValue then
+                        if oxygenValue < 100 then
+                            oxygenNotifyUI.Enabled = true
+                            updateOxygenDisplay(oxygenValue)
+                            
+                            if oxygenHideTimer then
+                                oxygenHideTimer:Cancel()
+                                oxygenHideTimer = nil
+                            end
+                        else
+                            if oxygenNotifyUI.Enabled and not oxygenHideTimer then
+                                oxygenHideTimer = task.delay(3, function()
+                                    if oxygenNotifyUI and oxygenNotifyRunning then
+                                        oxygenNotifyUI.Enabled = false
+                                        oxygenHideTimer = nil
+                                    end
+                                end)
+                            end
+                        end
+                    else
+                        oxygenNotifyUI.Enabled = false
+                    end
+                end)
+                
+                LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+                    if not oxygenNotifyRunning then return end
+                    
+                    task.wait(1)
+                    local oxygenValue = checkOxygen(newCharacter)
+                    if oxygenValue and oxygenValue < 100 then
+                        oxygenNotifyUI.Enabled = true
+                        updateOxygenDisplay(oxygenValue)
+                    else
+                        oxygenNotifyUI.Enabled = false
+                    end
+                end)
+            end
+        else
+            oxygenNotifyRunning = false
+            
+            if oxygenNotifyConnection then
+                oxygenNotifyConnection:Disconnect()
+                oxygenNotifyConnection = nil
+            end
+            
+            if oxygenHideTimer then
+                oxygenHideTimer:Cancel()
+                oxygenHideTimer = nil
+            end
+            
+            if oxygenNotifyUI then
+                oxygenNotifyUI.Enabled = false
+            end
+        end
+    end
+})
 
+local hasteClockUI = nil
+local hasteClockConnection = nil
+local hasteClockRoomConnection = nil
 
+NotifyBox:AddToggle('HasteClock',{
+     Text = "通知倒计时",
+     Default = false,
+     Callback = function(Value)
+        if Value then
+            if not hasteClockUI then
+                hasteClockUI = Instance.new("ScreenGui")
+                hasteClockUI.Name = "HasteClockUI"
+                hasteClockUI.Parent = game:GetService("CoreGui")
+                hasteClockUI.ResetOnSpawn = false
+                hasteClockUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                
+                local frame = Instance.new("Frame")
+                frame.Size = UDim2.new(0, 150, 0, 45)
+                frame.Position = UDim2.new(0.5, 100, 0.8, -30)
+                frame.AnchorPoint = Vector2.new(0.5, 0.5)
+                frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                frame.BorderSizePixel = 0
+                frame.BackgroundTransparency = 0.3
+                frame.Parent = hasteClockUI
+                
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = UDim.new(0, 8)
+                corner.Parent = frame
+                
+                local textLabel = Instance.new("TextLabel")
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.BackgroundTransparency = 1
+                textLabel.Text = "倒计时: --"
+                textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                textLabel.TextSize = 18
+                textLabel.Font = Enum.Font.Gotham
+                textLabel.Parent = frame
+                
+                hasteClockUI.Enabled = false
+            end
+            
+            local function updateTimerDisplay(timerText)
+                if hasteClockUI and hasteClockUI:FindFirstChildOfClass("Frame") then
+                    local frame = hasteClockUI:FindFirstChildOfClass("Frame")
+                    local textLabel = frame:FindFirstChildOfClass("TextLabel")
+                    
+                    if textLabel then
+                        textLabel.Text = "倒计时: " .. timerText
+                    end
+                end
+            end
+            
+            local function getCurrentRoomTimer()
+                local Players = game:GetService("Players")
+                local localPlayer = Players.LocalPlayer
+                
+                if not localPlayer then return nil end
+                
+                local currentRoom = localPlayer:GetAttribute("CurrentRoom")
+                if not currentRoom then return nil end
+                
+                local roomKey = tostring(currentRoom)
+                local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                
+                if not currentRooms then return nil end
+                
+                local room = currentRooms:FindFirstChild(roomKey)
+                if not room then return nil end
+                
+                local door = room:FindFirstChild("Door")
+                if not door then return nil end
+                
+                local displayTimer = door:FindFirstChild("DisplayTimer")
+                if not displayTimer then return nil end
+                
+                return displayTimer.Text.Text
+            end
+            
+            hasteClockConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                if not Toggles.HasteClock.Value then
+                    return
+                end
+                
+                local timerText = getCurrentRoomTimer()
+                
+                if timerText and timerText ~= "" and timerText ~= "..." then
+                    hasteClockUI.Enabled = true
+                    updateTimerDisplay(timerText)
+                else
+                    hasteClockUI.Enabled = false
+                end
+            end)
+            
+            local Players = game:GetService("Players")
+            local localPlayer = Players.LocalPlayer
+            
+            hasteClockRoomConnection = localPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
+                if not Toggles.HasteClock.Value then return end
+                
+                hasteClockUI.Enabled = true
+                updateTimerDisplay("...")
+                
+                task.delay(2, function()
+                    if Toggles.HasteClock.Value then
+                        local timerText = getCurrentRoomTimer()
+                        if not timerText or timerText == "" or timerText == "..." then
+                            hasteClockUI.Enabled = false
+                        end
+                    end
+                end)
+            end)
+            
+        else
+            if hasteClockConnection then
+                hasteClockConnection:Disconnect()
+                hasteClockConnection = nil
+            end
+            
+            if hasteClockRoomConnection then
+                hasteClockRoomConnection:Disconnect()
+                hasteClockRoomConnection = nil
+            end
+            
+            if hasteClockUI then
+                hasteClockUI.Enabled = false
+            end
+        end
+    end
+})
 
 
 Automation:AddDivider()
@@ -5416,9 +5690,42 @@ end
 
 end
 
+if oxygenNotifyConnection then
+    oxygenNotifyConnection:Disconnect()
+    oxygenNotifyConnection = nil
+end
+
+if oxygenHideTimer then
+    oxygenHideTimer:Cancel()
+    oxygenHideTimer = nil
+end
+
+if oxygenNotifyUI then
+    oxygenNotifyUI:Destroy()
+    oxygenNotifyUI = nil
+end
+
+oxygenNotifyRunning = false
 
 
-
+if Toggles.HasteClock and Toggles.HasteClock.Value then
+    Toggles.HasteClock:SetValue(false)
+end
+    
+if hasteClockConnection then
+    hasteClockConnection:Disconnect()
+    hasteClockConnection = nil
+end
+    
+if hasteClockRoomConnection then
+    hasteClockRoomConnection:Disconnect()
+    hasteClockRoomConnection = nil
+end
+    
+if hasteClockUI then
+    hasteClockUI:Destroy()
+    hasteClockUI = nil
+end
 
 
 if NoclipConnection then
