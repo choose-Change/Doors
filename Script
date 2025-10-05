@@ -834,6 +834,36 @@ end
 end
 })
 
+local autoGlitchEnabled = false
+local autoGlitchConnection = nil
+
+ModifiersBox:AddToggle('AutoGlitch', {
+    Text = "自动故障",
+    Default = false,
+    Callback = function(Value)
+        autoGlitchEnabled = Value
+        
+        if autoGlitchEnabled then
+            autoGlitchConnection = RunService.Heartbeat:Connect(function()
+                if autoGlitchEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local character = LocalPlayer.Character
+                    local humanoidRootPart = character.HumanoidRootPart
+                    
+                    local lookVector = humanoidRootPart.CFrame.LookVector
+                    
+                    local teleportPosition = humanoidRootPart.Position + (lookVector * 10000)
+                    
+                    character:PivotTo(CFrame.new(teleportPosition))
+                end
+            end)
+        else
+            if autoGlitchConnection then
+                autoGlitchConnection:Disconnect()
+                autoGlitchConnection = nil
+            end
+        end
+    end
+})
 
 if ReplicatedStorage:FindFirstChild("EntityInfo") or ReplicatedStorage:FindFirstChild("Bricks") then
 
@@ -5865,6 +5895,16 @@ if autoAnchorConnection then
     autoAnchorConnection = nil
 end
 autoAnchorRunning = false
+    
+if autoGlitchConnection then
+autoGlitchConnection:Disconnect()
+autoGlitchConnection = nil
+end
+autoGlitchEnabled = false
+    
+if Toggles.AutoGlitch and Toggles.AutoGlitch.Value then
+   Toggles.AutoGlitch:SetValue(false)
+end
 
 if InfiniteCrucifixConnection then
 InfiniteCrucifixConnection:Disconnect()
