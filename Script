@@ -419,7 +419,7 @@ end
 
 end)
 
-LocalPlayer:SetAttribute("mshaxLoaded",true)
+LocalPlayer:SetAttribute("StarringLoaded",true)
 
 
  Floor = ReplicatedStorage.GameData.Floor
@@ -575,18 +575,18 @@ local Connections = {}
 
 Window = Library:CreateWindow({
     Title = 'Starring',
-    Footer = "比爱心~",
+    Footer = "感觉我自己好帅",
     Center = true,
     AutoShow = true
 })
 
 Tabs = {
-  Player     = Window:AddTab('玩家'),
-	Exploits       = Window:AddTab('漏洞'),
-	Visuals       = Window:AddTab('视觉'),
-	Floor     = Window:AddTab('楼层'),
-	UISettings = Window:AddTab('配置'),
-Addons = Window:AddTab('插件'),
+  Player     = Window:AddTab('玩家', 'user'),
+	Exploits       = Window:AddTab('漏洞', 'bug'),
+	Visuals       = Window:AddTab('视觉', 'eye'),
+	Floor     = Window:AddTab('楼层', 'castle'),
+	UISettings = Window:AddTab('配置', 'settings'),
+Addons = Window:AddTab('插件', 'boxes'),
 
 }
 
@@ -5560,7 +5560,7 @@ workspace:FindFirstChild("Path Node"):Destroy()
 
 end
 
-LocalPlayer:SetAttribute("mshaxLoaded",false)
+LocalPlayer:SetAttribute("StarringLoaded",false)
 Library.Unloaded = true
 for i, Toggle in ipairs(Toggles) do
 Toggle:SetValue(false)
