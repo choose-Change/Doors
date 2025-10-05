@@ -288,11 +288,17 @@ Con = RunService.Heartbeat:Connect(function(dt)
 end)
 
 
+
+local function shouldShowESP(roomNumber)
+    local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+    if not currentRoom then return false end
+    return roomNumber == currentRoom or roomNumber == currentRoom + 1
+end
+
+
  local raycastParms = RaycastParams.new()
-
-
+ 
 function GetNearestCloset()
-
 
 local closest = nil
 local MaxDistance = math.huge
@@ -592,7 +598,7 @@ AddonBox = Tabs.Addons:AddLeftGroupbox('插件')
 local TabBox2 = Tabs.Main:AddLeftTabbox() 
 
 local MiscBox = TabBox2:AddTab("杂项")
-local NotifyBox = TabBox2:AddTab("通知 / ESP")
+local NotifyBox = TabBox2:AddTab("通知")
 
 
 local TabBox = Tabs.Player:AddLeftTabbox() 
@@ -1440,11 +1446,6 @@ NotifyBox:AddToggle('EntityNotifys',{
      Default = false
 })
 
-
-NotifyBox:AddToggle('EntitesESP',{
-     Text = "实体ESP",
-     Default = false
-})
 
 NotifyBox:AddToggle('NotifyChat',{
      Text = "聊天通知实体",
@@ -3146,6 +3147,7 @@ local KeyColor = Color3.new(0, 1, 0)
 local GateLeverColor = Color3.new(0,1,0)
 local TimerLeverColor = Color3.new(0,1,0)
 local PlayersColor = Color3.new(1, 1, 1)
+local EntityColor = Color3.new(1, 0, 0)
 local GeneratorColor = Color3.new(0,1,0)
 local HidingSpotColor = Color3.new(0,0.5,0)
 local LeverColor = Color3.new(0,1,0)
@@ -3161,24 +3163,43 @@ ESP:AddToggle('Door',{
      Default = false,
 Callback = function(Value)
 if Value then
-local Door = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value].Door.Door
-if not Door:GetAttribute("Used") then
-
-AddESP(Door, (Door.Parent:FindFirstChild("Lock") and "[上锁]  " or "") .. "门 " .. Door.Parent:GetAttribute("RoomID"), DoorColor)
-
-end
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+                local Door = room.Door.Door
+                if not Door:GetAttribute("Used") then
+                    local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
+                    local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+                    
+                    if roomNumber == currentRoom then
+                        if Door.Parent:FindFirstChild("Lock") then
+                            displayText = "[上锁] " .. displayText
+                        end
+                    elseif roomNumber == currentRoom + 1 then
+                        local keyFound = false
+                        for _, obj in ipairs(room:GetDescendants()) do
+                            if obj.Name == "KeyObtain" and not obj:GetAttribute("Used") then
+                                keyFound = true
+                                break
+                            end
+                        end
+                        if keyFound then
+                            displayText = "[上锁] " .. displayText
+                        end
+                    end
+                    
+                    AddESP(Door, displayText, DoorColor)
+                end
+            end
+        end
+    end
 else
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-for _, v in ipairs(room:GetChildren())
-do
-if v.Name == "Door" and v:FindFirstChild("Door") then
-ESPLibrary:RemoveESP(v.Door)
-
-
-end
-end
-end
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+            ESPLibrary:RemoveESP(room.Door.Door)
+        end
+    end
 end
 end
 }):AddColorPicker('DoorColo', {
@@ -3196,27 +3217,34 @@ Toggles.Door:SetValue(true)
 end
 	end
 })
+
 FloorESP:AddToggle('TimerLever',{
      Text = "倒计时拉杆",
      Default = false,
 Callback = function(Value)
 if Value then
-local v = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("TimerLever",true)
-if v and v.Name == "TimerLever" then
-AddESP(v,"倒计时拉杆",TimerLeverColor)
-end
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            local v = room:FindFirstChild("TimerLever",true)
+            if v and v.Name == "TimerLever" then
+                AddESP(v,"倒计时拉杆",TimerLeverColor)
+            end
+        end
+    end
 else
-local v = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:FindFirstChild("TimerLever",true)
-if v and v.Name == "TimerLever" then
-ESPLibrary:RemoveESP(v)
-end
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local v = room:FindFirstChild("TimerLever",true)
+        if v and v.Name == "TimerLever" then
+            ESPLibrary:RemoveESP(v)
+        end
+    end
 end
 end
 }):AddColorPicker('TimeLeverColo', {
-	Default = TimerLeverColor, -- Bright green
-	Title = 'Timer Lever Color', -- Optional. Allows you to have a custom color picker title (when you open it)
-	Transparency = 0, -- Optional. Enables transparency changing for this color picker (leave as nil to disable)
+	Default = TimerLeverColor,
+	Title = 'Timer Lever Color',
+	Transparency = 0,
 
 	Callback = function(Value)
 		TimerLeverColor = Value
@@ -3276,9 +3304,9 @@ end
 
 end
 }):AddColorPicker('LeverColo', {
-	Default = LeverColor, -- Bright green
-	Title = 'Lever Color', -- Optional. Allows you to have a custom color picker title (when you open it)
-	Transparency = 0, -- Optional. Enables transparency changing for this color picker (leave as nil to disable)
+	Default = LeverColor,
+	Title = 'Lever Color',
+	Transparency = 0,
 
 	Callback = function(Value)
 		LeverColor = Value
@@ -3316,9 +3344,9 @@ end
 end
 end
 }):AddColorPicker('GeneratorColo', {
-	Default = GeneratorColor, -- Bright green
-	Title = 'Generator Color', -- Optional. Allows you to have a custom color picker title (when you open it)
-	Transparency = 0, -- Optional. Enables transparency changing for this color picker (leave as nil to disable)
+	Default = GeneratorColor,
+	Title = 'Generator Color',
+	Transparency = 0,
 
 	Callback = function(Value)
 		GeneratorColor = Value
@@ -3373,9 +3401,9 @@ end
 end
 end
 }):AddColorPicker('FuseESP', {
-	Default = FuseColor, -- Bright green
-	Title = 'Fuse Color', -- Optional. Allows you to have a custom color picker title (when you open it)
-	Transparency = 0, -- Optional. Enables transparency changing for this color picker (leave as nil to disable)
+	Default = FuseColor,
+	Title = 'Fuse Color',
+	Transparency = 0,
 
 	Callback = function(Value)
 		FuseColor = Value
@@ -3445,19 +3473,23 @@ ESP:AddToggle('Key',{
      Default = false,
 Callback = function(Value)
 if Value then
-local v = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("KeyObtain",true)
-if v and not v:GetAttribute("Used") then
-AddESP(v,"钥匙",KeyColor)
-
-end
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            local v = room:FindFirstChild("KeyObtain",true)
+            if v and not v:GetAttribute("Used") then
+                AddESP(v,"钥匙",KeyColor)
+            end
+        end
+    end
 else
-local Key = workspace:FindFirstChild("KeyObtain",true)
-ESPLibrary:RemoveESP(Key)
-
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local Key = room:FindFirstChild("KeyObtain",true)
+        if Key then
+            ESPLibrary:RemoveESP(Key)
+        end
+    end
 end
-
-
 end
 }):AddColorPicker('KeyColo', {
 	Default = KeyColor,
@@ -3493,21 +3525,32 @@ ESP:AddToggle('HidingSpot',{
      Default = false,
 Callback = function(Value)
 if Value then
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:FindFirstChild("Assets",true):GetChildren()) do
-local TextName = HidingSpots[v.Name]
-if TextName and v.PrimaryPart then
-AddESP(v,TextName,HidingSpotColor)
-
-end
-end
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            local assets = room:FindFirstChild("Assets")
+            if assets then
+                for _, v in ipairs(assets:GetChildren()) do
+                    local TextName = HidingSpots[v.Name]
+                    if TextName and v.PrimaryPart then
+                        AddESP(v,TextName,HidingSpotColor)
+                    end
+                end
+            end
+        end
+    end
 else
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-local TextName = HidingSpots[v.Name]
-if TextName and v.PrimaryPart then
-ESPLibrary:RemoveESP(v)
-end
-end
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local assets = room:FindFirstChild("Assets")
+        if assets then
+            for _, v in ipairs(assets:GetChildren()) do
+                local TextName = HidingSpots[v.Name]
+                if TextName and v.PrimaryPart then
+                    ESPLibrary:RemoveESP(v)
+                end
+            end
+        end
+    end
 end
 end
 }):AddColorPicker('HidingSpot', {
@@ -3531,17 +3574,23 @@ ESP:AddToggle('GateLever',{
      Default = false,
 Callback = function(Value)
 if Value then
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:GetDescendants()) do
-if v.Name == "LeverForGate" then
-AddESP(v,"门拉杆",GateLeverColor)
-
-end
-end
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            for _, v in ipairs(room:GetDescendants()) do
+                if v.Name == "LeverForGate" then
+                    AddESP(v,"门拉杆",GateLeverColor)
+                end
+            end
+        end
+    end
 else
-local Lever = workspace.CurrentRooms:FindFirstChild("LeverForGate",true)
-if Lever then 
-ESPLibrary:RemoveESP(Lever)
-end
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local Lever = room:FindFirstChild("LeverForGate",true)
+        if Lever then 
+            ESPLibrary:RemoveESP(Lever)
+        end
+    end
 end
 end
 }):AddColorPicker('GateLeverColo', {
@@ -3613,26 +3662,24 @@ ESP:AddToggle('Books',{
      Default = false,
 Callback = function(Value)
 if Value then
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:GetDescendants()) do
-if v.Name == "LiveHintBook" then
-AddESP(v,"书",BooksColor)
-
-end
-end
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            for _, v in ipairs(room:GetDescendants()) do
+                if v.Name == "LiveHintBook" then
+                    AddESP(v,"书",BooksColor)
+                end
+            end
+        end
+    end
 else
-
-
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:GetDescendants()) do
-if v.Name == "LiveHintBook" then
-ESPLibrary:RemoveESP(v)
-
-end
-
-
-end
-
-
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        for _, v in ipairs(room:GetDescendants()) do
+            if v.Name == "LiveHintBook" then
+                ESPLibrary:RemoveESP(v)
+            end
+        end
+    end
 end
 end
 }):AddColorPicker('BooksColo', {
@@ -3656,26 +3703,24 @@ ESP:AddToggle('Breaker',{
      Default = false,
 Callback = function(Value)
 if Value then
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:GetDescendants()) do
-if v.Name == "LiveBreakerPolePickup" then
-AddESP(v,"断路器",BreakerColor)
-
-end
-end
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            for _, v in ipairs(room:GetDescendants()) do
+                if v.Name == "LiveBreakerPolePickup" then
+                    AddESP(v,"断路器",BreakerColor)
+                end
+            end
+        end
+    end
 else
-
-
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:GetDescendants()) do
-if v.Name == "LiveBreakerPolePickup" then
-ESPLibrary:RemoveESP(v)
-
-
-end
-
-
-end
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        for _, v in ipairs(room:GetDescendants()) do
+            if v.Name == "LiveBreakerPolePickup" then
+                ESPLibrary:RemoveESP(v)
+            end
+        end
+    end
 end
 end
 }):AddColorPicker('BreakerColo', {
@@ -3786,25 +3831,24 @@ ESP:AddToggle('Gold',{
      Default = false,
 Callback = function(Value)
 if Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v and v.Name == "GoldPile" then
-AddESP(v,"金币 " .. v:GetAttribute("GoldValue"),GoldColor)
-end
-end
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            for _, v in ipairs(room:GetDescendants()) do
+                if v and v.Name == "GoldPile" then
+                    AddESP(v,"金币 " .. v:GetAttribute("GoldValue"),GoldColor)
+                end
+            end
+        end
+    end
 else
-
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-
-if v.Name == "GoldPile" then
-
-ESPLibrary:RemoveESP(v)
-
-end
-
-end
-
-
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        for _, v in ipairs(room:GetDescendants()) do
+            if v.Name == "GoldPile" then
+                ESPLibrary:RemoveESP(v)
+            end
+        end
+    end
 end
 end
 }):AddColorPicker('GoldColor', {
@@ -3823,7 +3867,27 @@ end
 	end
 })
 
-
+ESP:AddToggle('EntitesESP',{
+     Text = "实体",
+     Default = false
+}):AddColorPicker('EntityColorPicker', {
+	Default = EntityColor,
+	Title = '实体颜色',
+	Transparency = 0,
+	Callback = function(Value)
+		EntityColor = Value
+        if Toggles.EntitesESP.Value then
+            for _, entity in ipairs(workspace:GetChildren()) do
+                if entity:FindFirstChild("ESP_System") then
+                    entity.ESP_System.FillColor = EntityColor
+                    if entity:FindFirstChild("ESP_GUI") and entity.ESP_GUI:FindFirstChild("Txt") then
+                        entity.ESP_GUI.Txt.TextColor3 = EntityColor
+                    end
+                end
+            end
+        end
+	end
+})
 
 table.insert(Connections,UserInputService.JumpRequest:Connect(function()
 task.wait(0.3)
@@ -3896,7 +3960,7 @@ end
 if base then
 base.Transparency = 0.99
 end
-ESPLibrary:AddESP(entity,label,Color3.new(1, 0, 0))
+ESPLibrary:AddESP(entity,label,EntityColor)
 end
 
 Toggles.EntityNotifys:OnChanged(function(Value)
@@ -4525,6 +4589,75 @@ end))
 
 
 table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
+if Toggles.Door and Toggles.Door.Value then
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+            ESPLibrary:RemoveESP(room.Door.Door)
+        end
+    end
+    
+    local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+    if currentRoom then
+        for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+            local roomNumber = tonumber(room.Name)
+            if roomNumber and (roomNumber == currentRoom or roomNumber == currentRoom + 1) then
+                if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+                    local Door = room.Door.Door
+                    if not Door:GetAttribute("Used") then
+                        local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
+                        
+                        if roomNumber == currentRoom then
+                            if Door.Parent:FindFirstChild("Lock") then
+                                displayText = "[上锁] " .. displayText
+                            end
+                        elseif roomNumber == currentRoom + 1 then
+                            local keyFound = false
+                            for _, obj in ipairs(room:GetDescendants()) do
+                                if obj.Name == "KeyObtain" and not obj:GetAttribute("Used") then
+                                    keyFound = true
+                                    break
+                                end
+                            end
+                            if keyFound then
+                                displayText = "[上锁] " .. displayText
+                            end
+                        end
+                        
+                        AddESP(Door, displayText, DoorColor)
+                    end
+                end
+            end
+        end
+    end
+end
+    if Toggles.Key and Toggles.Key.Value then
+        Toggles.Key:SetValue(false)
+        Toggles.Key:SetValue(true)
+    end
+    if Toggles.HidingSpot and Toggles.HidingSpot.Value then
+        Toggles.HidingSpot:SetValue(false)
+        Toggles.HidingSpot:SetValue(true)
+    end
+    if Toggles.GateLever and Toggles.GateLever.Value then
+        Toggles.GateLever:SetValue(false)
+        Toggles.GateLever:SetValue(true)
+    end
+    if Toggles.Books and Toggles.Books.Value then
+        Toggles.Books:SetValue(false)
+        Toggles.Books:SetValue(true)
+    end
+    if Toggles.Breaker and Toggles.Breaker.Value then
+        Toggles.Breaker:SetValue(false)
+        Toggles.Breaker:SetValue(true)
+    end
+    if Toggles.Gold and Toggles.Gold.Value then
+        Toggles.Gold:SetValue(false)
+        Toggles.Gold:SetValue(true)
+    end
+    if Toggles.TimerLever and Toggles.TimerLever.Value then
+        Toggles.TimerLever:SetValue(false)
+        Toggles.TimerLever:SetValue(true)
+    end
 
 if Toggles.AntiSnare.Value then
 if Floor.Value == "Garden" then
