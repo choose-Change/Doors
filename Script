@@ -1919,7 +1919,75 @@ Automation:AddToggle('AutoHeartbeatMiniGame',{
 
 })
 
+local autoAnchorRunning = false
+local autoAnchorConnection = nil
 
+if Floor.Value == "Mines" then
+    Automation:AddToggle('AutoAnchorSolver', {
+        Text = "自动解锚点",
+        Default = false,
+        Callback = function(Value)
+            if Value then
+                autoAnchorRunning = true
+                
+                local function solveAnchor()
+                    if not autoAnchorRunning then return end
+                    
+                    local AnchorHintFrame = MainUI:FindFirstChild("AnchorHintFrame")
+                    if not AnchorHintFrame then
+                        task.wait(1)
+                        return
+                    end
+                    
+                    local anchorSignText = AnchorHintFrame:FindFirstChild("AnchorCode")
+                    local currentCode = AnchorHintFrame:FindFirstChild("Code")
+                    
+                    if not anchorSignText or not currentCode then
+                        return
+                    end
+                    
+                    local signText = anchorSignText.Text
+                    local codeText = currentCode.Text
+                    
+                    if signText == "" or codeText == "" then
+                        return
+                    end
+                    
+                    local room50 = workspace.CurrentRooms:FindFirstChild("50")
+                    if not room50 then return end
+                    
+                    for _, anchor in ipairs(room50:GetDescendants()) do
+                        if anchor.Name == "MinesAnchor" and autoAnchorRunning then
+                            local sign = anchor:FindFirstChild("Sign")
+                            if sign then
+                                local textLabel = sign:FindFirstChild("TextLabel")
+                                if textLabel and textLabel.Text == signText then
+                                    local anchorRemote = anchor:FindFirstChild("AnchorRemote")
+                                    if anchorRemote then
+                                        anchorRemote:InvokeServer(codeText)
+                                    end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                autoAnchorConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                    if not autoAnchorRunning then return end
+                    solveAnchor()
+                end)
+                
+            else
+                autoAnchorRunning = false
+                if autoAnchorConnection then
+                    autoAnchorConnection:Disconnect()
+                    autoAnchorConnection = nil
+                end
+            end
+        end
+    })
+end
 
 
 local UnlockDistance = 40
@@ -2449,7 +2517,6 @@ Automation:AddToggle('AutoCloset',{
 		ChangedCallback = function(New)
 		end
 	})
-
 
 Movement:AddDivider()
 Movement:AddToggle('Noacceleration',{
@@ -3100,7 +3167,6 @@ if foundAnchor then
 end
     })
 
-
 FloorAnti:AddToggle('DeleteFigure',{
      Text = "删除飞哥",
      Default = false,
@@ -3257,6 +3323,38 @@ end)
 
 end
 
+if Floor.Value == "Mines" then
+    local minecartRenameActive = false
+    
+    FloorAnti:AddButton({
+        Text = "删除矿车",
+        DoubleClick = false,
+        Tooltip = "删除后如果没有别的玩家在矿车上，Seek将会加速",
+        Func = function()
+            if minecartRenameActive then
+                return
+            end
+            
+            minecartRenameActive = true
+            
+            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+            local RemotesFolder = ReplicatedStorage:WaitForChild("RemotesFolder")
+            
+            local remoteNames = {"MinecartPos", "UpdateMinecartNodes", "MinecartResult"}
+            
+            for _, name in ipairs(remoteNames) do
+                local remote = RemotesFolder:FindFirstChild(name)
+                if remote then
+                    remote.Name = name .. " "
+                end
+            end
+            
+            minecartRenameActive = false
+            Library:Notify("删除矿车成功",7)
+            Library:Notify("触发矿车过场动画后可绕过反作弊",7)
+        end
+    })
+end
 
 local RankedAntiBananaConnection = nil
 
@@ -5762,11 +5860,16 @@ AutoLibraryCodeConnection:Disconnect()
 AutoLibraryCodeConnection = nil
 end
 
+if autoAnchorConnection then
+    autoAnchorConnection:Disconnect()
+    autoAnchorConnection = nil
+end
+autoAnchorRunning = false
+
 if InfiniteCrucifixConnection then
 InfiniteCrucifixConnection:Disconnect()
 InfiniteCrucifixConnection = nil
 end
-
 
 if ConInf then
 ConInf:Disconnect()
