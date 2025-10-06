@@ -574,7 +574,7 @@ local Connections = {}
 
 
 Window = Library:CreateWindow({
-    Title = 'Starring',
+    Title = '💠 Starring',
     Footer = "感觉我自己好帅",
     Center = true,
     AutoShow = true
@@ -2931,63 +2931,64 @@ end
 end)
 
 
+local SpeedBypassInterval = 0.216
+
 if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 Bypass:AddToggle('SpeedBypass',{
      Text = "速度绕过",
      Default = false,
 Callback = function(Value)
-Options.SpeedBoostSlider:SetMax(Value and 75 or 21)
-
+Options.SpeedBoostSlider:SetMax(Value and 100 or 21)
 Options.SpeedBoostSlider:SetValue(Value and Options.SpeedBoostSlider.Value or 21)
-
-
-Options.FlySpeed:SetMax(Value and 75 or 21)
-
-
+Options.FlySpeed:SetMax(Value and 100 or 21)
 Options.FlySpeed:SetValue(Value and Options.FlySpeed.Value or 21)
 
-
-while true   do
-task.wait(0.216)
-if alive then
-local CollisionClon = LocalPlayer.Character:WaitForChild("_CollisionPart")
-
-local CollisionClon2 = LocalPlayer.Character:WaitForChild("_CollisionPart2")
-if not  Toggles.SpeedBypass.Value or Library.Unloaded then
-CollisionClon.Massless = true
-CollisionClon2.Massless = true
-break end
-
-
-
-
-
-if Character.CollisionPart.Anchored or nothitted or Toggles.AnticheatManipulation and Toggles.AnticheatManipulation.Value then
-CollisionClon.Massless = true
-CollisionClon2.Massless = true
-task.wait(0.35)
-else
-CollisionClon.Massless = true
-CollisionClon2.Massless = true
-task.wait(0.216)
-CollisionClon2.Massless = false
-CollisionClon.Massless = false
+while true do
+    task.wait(SpeedBypassInterval)
+    if alive then
+        local CollisionClon = LocalPlayer.Character:WaitForChild("_CollisionPart")
+        local CollisionClon2 = LocalPlayer.Character:WaitForChild("_CollisionPart2")
+        
+        if not Toggles.SpeedBypass.Value or Library.Unloaded then
+            CollisionClon.Massless = true
+            CollisionClon2.Massless = true
+            break 
+        end
+        
+        if Character.CollisionPart.Anchored or nothitted or Toggles.AnticheatManipulation and Toggles.AnticheatManipulation.Value then
+            CollisionClon.Massless = true
+            CollisionClon2.Massless = true
+            task.wait(0.35)
+        else
+            CollisionClon.Massless = true
+            CollisionClon2.Massless = true
+            task.wait(SpeedBypassInterval)
+            CollisionClon2.Massless = false
+            CollisionClon.Massless = false
+        end
+    end
 end
-end
-
-
-end
-
 end,
 })
 end
 if not ReplicatedStorage:FindFirstChild("RemotesFolder") then
 
 
-Options.SpeedBoostSlider:SetMax(80)
-Options.FlySpeed:SetMax(80)
+Options.SpeedBoostSlider:SetMax(115)
+Options.FlySpeed:SetMax(115)
 end
 
+Bypass:AddSlider("SpeedBypassInterval", {
+    Text = "速度绕过间隔",
+    Default = 0.216,
+    Min = 0.200,
+    Max = 0.230,
+    Rounding = 3,
+    Compact = true,
+    Callback = function(Value)
+        SpeedBypassInterval = Value
+    end,
+})
 
 Bypass:AddDivider()
 if  ReplicatedStorage:FindFirstChild("RemotesFolder") then 
@@ -3370,7 +3371,7 @@ if Floor.Value == "Mines" then
             local ReplicatedStorage = game:GetService("ReplicatedStorage")
             local RemotesFolder = ReplicatedStorage:WaitForChild("RemotesFolder")
             
-            local remoteNames = {"MinecartPos", "UpdateMinecartNodes", "MinecartResult"}
+            local remoteNames = {"MinecartResult"}
             
             for _, name in ipairs(remoteNames) do
                 local remote = RemotesFolder:FindFirstChild(name)
