@@ -141,152 +141,142 @@ ThemeManager = loadstring(game:HttpGet(repo..'addons/ThemeManager.lua'))()
 SaveManager  = loadstring(game:HttpGet(repo..'addons/SaveManager.lua'))()
 Options = Library.Options
 Toggles = Library.Toggles
-local ESPLibrary = {}
-getgenv().ESPLibrary = Library
+local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/MSESP/refs/heads/main/source.luau"))()
 
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
+local ESPConfig = {
+    Tracer = {
+        Enabled = true,
+    },
+    TextSize = 40,
+    ShowDistance = true,
+    ShowTracers = false,
+    FillTransparency = 0.5,
+    OutlineTransparency = 0
+}
 
-local LocalPlayer = game.Players.LocalPlayer
-
-local Updating = true
-
-local ESPTable = {}
-
-local ShowDis = ShowDis or false
-
-Library.FillTransparency = 0.7
-Library.OutlineTransparency = 0.4
+local ESPObjects = {}
+local ESPEnabled = false
 
 function ESPLibrary:ShowDistance(Value)
-    ShowDis = Value
+    ESPConfig.ShowDistance = Value
+    UpdateAllESPConfig()
 end
 
-function ESPLibrary:AddESP(Part,Txt,Color)
-    if Part:FindFirstChild("ESP_System") then return end
-
-    table.insert(ESPTable, Part)
-
-    local Highlight = Instance.new("Highlight",Part)
-    Highlight.Name = "ESP_System"
-    Highlight.FillColor = Color
-    Highlight.Enabled = true 
-    Highlight.Adornee = Part
-    Highlight.FillTransparency = Library.FillTransparency or 0.7
-    Highlight.OutlineTransparency = Library.OutlineTransparency or 0.4
-
-    local BillboardGui = Instance.new("BillboardGui", Part)
-    BillboardGui.Name = "ESP_GUI"
-    BillboardGui.Size = UDim2.new(0, 1, 0, 1)
-    BillboardGui.MaxDistance = math.huge
-    BillboardGui.Enabled = true
-    BillboardGui.AlwaysOnTop = true
-
-    local TextLabel = Instance.new("TextLabel", BillboardGui)
-    TextLabel.Text = Txt
-    TextLabel.TextSize = 19
-    TextLabel.Size = UDim2.new(0, 1,0, 1)
-    TextLabel.Font = Enum.Font.Highway
-    TextLabel.TextColor3 = Color
-    TextLabel.Name = "Txt"
-    TextLabel.TextYAlignment = "Bottom"
-    TextLabel.TextStrokeTransparency = 0
-    TextLabel.BackgroundTransparency = 1
-
-    local UIScale2 = Instance.new("UIScale",TextLabel)
-    UIScale2.Scale = 1
-
-    local TextLabel2 = Instance.new("TextLabel", BillboardGui)
-    TextLabel2.Text = "nil"
-    TextLabel2.TextSize = 18
-    TextLabel2.Size = UDim2.new(0, 1,0, 1)
-    TextLabel2.TextColor3 = Color3.new(1, 1, 1)
-    TextLabel2.Name = "DistanceMarker"
-    TextLabel2.BackgroundTransparency = 1
-    TextLabel2.Font = Enum.Font.Highway
-    TextLabel2.TextStrokeTransparency = 0
-    TextLabel2.TextYAlignment = "Top"
-    TextLabel2.Visible = ShowDis
-    local UIScale = Instance.new("UIScale",TextLabel2)
-    UIScale.Scale = 1
+function ESPLibrary:AddESP(Part, Txt, Color)
+    if not Part or not Part.Parent then return end
+    
+    local model = Part
+    if Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
+        model = Part.Parent
+    end
+    
+    if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
+        model = Part
+    end
+    
+    if ESPObjects[model] then
+        ESPObjects[model]:Hide()
+    end
+    
+    local espObject = ESPLibrary:Add({
+        Name = Txt,
+        Model = model,
+        Color = Color,
+        MaxDistance = 1000,
+        TextSize = ESPConfig.TextSize,
+        ESPType = "Highlight",
+        FillColor = Color,
+        OutlineColor = Color,
+        FillTransparency = ESPConfig.FillTransparency,
+        OutlineTransparency = ESPConfig.OutlineTransparency,
+        Tracer = { 
+            Enabled = ESPConfig.Tracer.Enabled,
+            Color = Color,
+            From = "Bottom"
+        }
+    })
+    
+    ESPObjects[model] = espObject
+    espObject:Show()
 end
 
 function ESPLibrary:RemoveESP(Part)
-    for i, part in pairs(ESPTable) do
-        if part == Part then
-            table.remove(ESPTable, i)
-            break
-        end
+    local model = Part
+    if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
+        model = Part
+    elseif Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
+        model = Part.Parent
     end
-
-    for _, v in ipairs(Part:GetChildren()) do
-        if v.Name == "ESP_System" or v.Name == "ESP_GUI"  then
-            v:Destroy()
-        end
+    
+    if ESPObjects[model] then
+        ESPObjects[model]:Hide()
+        ESPObjects[model] = nil
     end
 end
 
 function ESPLibrary:GenerateRandomString()
-    return HttpService:GenerateGUID(false)
+    return game:GetService("HttpService"):GenerateGUID(false)
 end
 
 function ESPLibrary:Unload()
-    Updating = false
-    for _, Object in ipairs(ESPTable) do
-        if Object and Object:FindFirstChild("ESP_GUI") and Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker") then
-            Object:FindFirstChild("ESP_GUI"):Destroy()
-            Object:FindFirstChild("ESP_System"):Destroy()
-            ESPTable = {}
+    for model, espObject in pairs(ESPObjects) do
+        if espObject and typeof(espObject.Hide) == "function" then
+            espObject:Hide()
         end
     end
+    ESPObjects = {}
     getgenv().ESPLibrary = nil
 end
 
-local Con
-local Time = 0
-Con = RunService.Heartbeat:Connect(function(dt)
-    Time = Time + dt
-
-    if Time > 0.15 then
-        Time = 0
-
-        if Updating == false then
-            Con:Disconnect()
-            Con = nil
+function UpdateAllESPConfig()
+    ESPLibrary.GlobalConfig.Distance = ESPConfig.ShowDistance
+    ESPLibrary.GlobalConfig.Tracers = ESPConfig.ShowTracers
+    
+    for model, espObject in pairs(ESPObjects) do
+        if model and model.Parent and espObject and espObject.CurrentSettings then
+            espObject.CurrentSettings.TextSize = ESPConfig.TextSize
+            espObject.CurrentSettings.Tracer.Enabled = ESPConfig.Tracer.Enabled
+            espObject.CurrentSettings.FillTransparency = ESPConfig.FillTransparency
+            espObject.CurrentSettings.OutlineTransparency = ESPConfig.OutlineTransparency
+            
+            espObject:Hide()
+            espObject:Show()
         end
-
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            for _, Object in ipairs(ESPTable) do
-                if Object and Object:FindFirstChild("ESP_GUI") and Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker") then
-                    Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker").Visible = ShowDis
-
-                    if Workspace.CurrentCamera ~= nil then
-                        local FOV = Workspace.CurrentCamera.FieldOfView
-
-                        if FOV == 120 then
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker").UIScale.Scale = 2
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("Txt").UIScale.Scale = 2
-                        elseif FOV == 80 then
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("Txt").UIScale.Scale = 1.5
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker").UIScale.Scale = 1.5
-                        elseif FOV > 80  then
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("Txt").UIScale.Scale = 2.2
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker").UIScale.Scale = 2.2
-                        elseif FOV == 70 then
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("Txt").UIScale.Scale = 1
-                            Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker").UIScale.Scale = 1
-                        end
-                    end
-
-                    local Pos = Object:IsA("Model") and Object:GetPivot().Position or Object:IsA("BasePart") and Object.Position or Vector3.new(0, 0, 0)
-                    local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - Pos).Magnitude
-                    Object:FindFirstChild("ESP_GUI"):FindFirstChild("DistanceMarker").Text = "[" .. math.floor(Distance) .. "m]" 
-                end
-            end
-        end 
     end
-end)
+end
 
+function UpdateFillTransparency(value)
+    ESPConfig.FillTransparency = value
+    for _, espObject in pairs(ESPObjects) do
+        if espObject and espObject.CurrentSettings then
+            espObject.CurrentSettings.FillTransparency = value
+            espObject:Hide()
+            espObject:Show()
+        end
+    end
+end
+
+function UpdateOutlineTransparency(value)
+    ESPConfig.OutlineTransparency = value
+    for _, espObject in pairs(ESPObjects) do
+        if espObject and espObject.CurrentSettings then
+            espObject.CurrentSettings.OutlineTransparency = value
+            espObject:Hide()
+            espObject:Show()
+        end
+    end
+end
+
+function UpdateTextSize(value)
+    ESPConfig.TextSize = value
+    for _, espObject in pairs(ESPObjects) do
+        if espObject and espObject.CurrentSettings then
+            espObject.CurrentSettings.TextSize = value
+            espObject:Hide()
+            espObject:Show()
+        end
+    end
+end
 
 
 local function shouldShowESP(roomNumber)
@@ -1818,23 +1808,52 @@ SettingsESP:AddToggle('EnableShowDistancws',{
      Text = "显示距离",
      Default = false,
 Callback = function(Value)
-ESPLibrary:ShowDistance(Value)
+    ESPConfig.ShowDistance = Value
+    UpdateAllESPConfig()
 end
+})
+
+SettingsESP:AddToggle("ShowTracersToggle", {
+    Text = "追踪线",
+    Default = ESPConfig.ShowTracers,
+    Callback = function(Value)
+        ESPConfig.ShowTracers = Value
+        UpdateAllESPConfig()
+    end,
+})
+
+SettingsESP:AddToggle('RainbowESP', {
+    Text = '彩虹ESP',
+    Default = false,
+    Callback = function(Value)
+        ESPLibrary.GlobalConfig.Rainbow = Value
+        UpdateAllESPConfig()
+    end
+})
+
+SettingsESP:AddSlider("TextSizeSlider", {
+    Text = "文本大小",
+    Default = ESPConfig.TextSize,
+    Min = 10,
+    Max = 50,
+    Rounding = 0,
+    Callback = function(Value)
+        ESPConfig.TextSize = Value
+        UpdateAllESPConfig()
+    end,
 })
 
 SettingsESP:AddSlider("ESPFillTransparency", {
     Text = "填充透明度",
-    Default = 0.7,
+    Default = 0.5,
     Min = 0,
     Max = 1,
     Rounding = 2,
     Compact = true,
     Callback = function(Value)
-        ESPLibrary.FillTransparency = Value
-        for _, obj in pairs(workspace:GetDescendants()) do
-            local esp = obj:FindFirstChild("ESP_System")
-            if esp then
-                esp.FillTransparency = Value
+        for _, espObject in pairs(ESPObjects) do
+            if espObject and espObject.CurrentSettings then
+                espObject.CurrentSettings.FillTransparency = Value
             end
         end
     end
@@ -1842,17 +1861,15 @@ SettingsESP:AddSlider("ESPFillTransparency", {
 
 SettingsESP:AddSlider("ESPOutlineTransparency", {
     Text = "轮廓透明度",
-    Default = 0.4,
+    Default = 0,
     Min = 0,
     Max = 1,
     Rounding = 2,
     Compact = true,
     Callback = function(Value)
-        ESPLibrary.OutlineTransparency = Value
-        for _, obj in pairs(workspace:GetDescendants()) do
-            local esp = obj:FindFirstChild("ESP_System")
-            if esp then
-                esp.OutlineTransparency = Value
+        for _, espObject in pairs(ESPObjects) do
+            if espObject and espObject.CurrentSettings then
+                espObject.CurrentSettings.OutlineTransparency = Value
             end
         end
     end
@@ -2726,7 +2743,7 @@ end
 })
 
 Anti:AddToggle('AntiScreech',{
-     Text = "防 Screech",
+     Text = "Anti-Screech",
      Default = false,
 Callback = function(Value)
 local Screech = Modules:FindFirstChild("Screech") or Modules:FindFirstChild("_Screech")
@@ -2753,13 +2770,6 @@ Anti:AddToggle('AntiEyes',{
      Text = "防 Eyes",
      Default = false
 })
-
-
-
-
-
-
-
 
 
 Anti:AddToggle('AntiSnare',{
@@ -5055,47 +5065,47 @@ end))
 
 
 table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
-if Toggles.Door and Toggles.Door.Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
-            ESPLibrary:RemoveESP(room.Door.Door)
-        end
-    end
-    
-    local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
-    if currentRoom then
+    if Toggles.Door and Toggles.Door.Value then
         for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-            local roomNumber = tonumber(room.Name)
-            if roomNumber and (roomNumber == currentRoom or roomNumber == currentRoom + 1) then
-                if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
-                    local Door = room.Door.Door
-                    if not Door:GetAttribute("Used") then
-                        local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
-                        
-                        if roomNumber == currentRoom then
-                            if Door.Parent:FindFirstChild("Lock") then
-                                displayText = "[上锁] " .. displayText
-                            end
-                        elseif roomNumber == currentRoom + 1 then
-                            local keyFound = false
-                            for _, obj in ipairs(room:GetDescendants()) do
-                                if obj.Name == "KeyObtain" and not obj:GetAttribute("Used") then
-                                    keyFound = true
-                                    break
+            if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+                ESPLibrary:RemoveESP(room.Door.Door)
+            end
+        end
+        
+        local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+        if currentRoom then
+            for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+                local roomNumber = tonumber(room.Name)
+                if roomNumber and (roomNumber == currentRoom or roomNumber == currentRoom + 1) then
+                    if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+                        local Door = room.Door.Door
+                        if not Door:GetAttribute("Used") then
+                            local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
+                            
+                            if roomNumber == currentRoom then
+                                if Door.Parent:FindFirstChild("Lock") then
+                                    displayText = "[上锁] " .. displayText
+                                end
+                            elseif roomNumber == currentRoom + 1 then
+                                local keyFound = false
+                                for _, obj in ipairs(room:GetDescendants()) do
+                                    if obj.Name == "KeyObtain" and not obj:GetAttribute("Used") then
+                                        keyFound = true
+                                        break
+                                    end
+                                end
+                                if keyFound then
+                                    displayText = "[上锁] " .. displayText
                                 end
                             end
-                            if keyFound then
-                                displayText = "[上锁] " .. displayText
-                            end
+                            
+                            AddESP(Door, displayText, DoorColor)
                         end
-                        
-                        AddESP(Door, displayText, DoorColor)
                     end
                 end
             end
         end
     end
-end
     if Toggles.Key and Toggles.Key.Value then
         Toggles.Key:SetValue(false)
         Toggles.Key:SetValue(true)
@@ -5737,6 +5747,9 @@ print("hi2")
 
 
 function Unload()
+if ESPLibrary and ESPLibrary.GlobalConfig then
+ESPLibrary.GlobalConfig.Rainbow = false
+end
 if AutoDoorsConnection then
 AutoDoorsConnection:Disconnect()
 AutoDoorsConnection = nil
