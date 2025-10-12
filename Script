@@ -146,6 +146,7 @@ local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/ms
 local ESPConfig = {
     Tracer = {
         Enabled = true,
+        Position = "Bottom"
     },
     TextSize = 40,
     ShowDistance = true,
@@ -156,11 +157,6 @@ local ESPConfig = {
 
 local ESPObjects = {}
 local ESPEnabled = false
-
-function ESPLibrary:ShowDistance(Value)
-    ESPConfig.ShowDistance = Value
-    UpdateAllESPConfig()
-end
 
 function ESPLibrary:AddESP(Part, Txt, Color)
     if not Part or not Part.Parent then return end
@@ -192,7 +188,7 @@ function ESPLibrary:AddESP(Part, Txt, Color)
         Tracer = { 
             Enabled = ESPConfig.Tracer.Enabled,
             Color = Color,
-            From = "Bottom"
+            From = ESPConfig.Tracer.Position
         }
     })
     
@@ -236,11 +232,50 @@ function UpdateAllESPConfig()
         if model and model.Parent and espObject and espObject.CurrentSettings then
             espObject.CurrentSettings.TextSize = ESPConfig.TextSize
             espObject.CurrentSettings.Tracer.Enabled = ESPConfig.Tracer.Enabled
+            espObject.CurrentSettings.Tracer.From = ESPConfig.Tracer.Position
             espObject.CurrentSettings.FillTransparency = ESPConfig.FillTransparency
             espObject.CurrentSettings.OutlineTransparency = ESPConfig.OutlineTransparency
             
             espObject:Hide()
             espObject:Show()
+        end
+    end
+end
+
+function RecreateAllESP()
+    local espStates = {
+        Door = Toggles.Door and Toggles.Door.Value,
+        Key = Toggles.Key and Toggles.Key.Value,
+        HidingSpot = Toggles.HidingSpot and Toggles.HidingSpot.Value,
+        GateLever = Toggles.GateLever and Toggles.GateLever.Value,
+        Players = Toggles.Players and Toggles.Players.Value,
+        Books = Toggles.Books and Toggles.Books.Value,
+        Breaker = Toggles.Breaker and Toggles.Breaker.Value,
+        Items = Toggles.Items and Toggles.Items.Value,
+        Gold = Toggles.Gold and Toggles.Gold.Value,
+        EntitesESP = Toggles.EntitesESP and Toggles.EntitesESP.Value,
+        TimerLever = Toggles.TimerLever and Toggles.TimerLever.Value,
+        LeverESP = Toggles.LeverESP and Toggles.LeverESP.Value,
+        Generator = Toggles.Generator and Toggles.Generator.Value,
+        Ladder = Toggles.Ladder and Toggles.Ladder.Value,
+        Fuse = Toggles.Fuse and Toggles.Fuse.Value,
+        Anchor = Toggles.Anchor and Toggles.Anchor.Value,
+        WaterPump = Toggles.WaterPump and Toggles.WaterPump.Value
+    }
+    
+    for model, espObject in pairs(ESPObjects) do
+        if espObject and typeof(espObject.Hide) == "function" then
+            espObject:Hide()
+        end
+    end
+    ESPObjects = {}
+    
+    for espType, isEnabled in pairs(espStates) do
+        if isEnabled then
+            if Toggles[espType] then
+                Toggles[espType]:SetValue(false)
+                Toggles[espType]:SetValue(true)
+            end
         end
     end
 end
@@ -1064,9 +1099,9 @@ end
 
 
 
-Library.NotifySide = Library.IsMobile == true and "Right" or "Left"
+Library.NotifySide = Library.IsMobile == true and "右侧" or "左侧"
 SettingsBox:AddDropdown("LibraryNotifySide", {
-        Values = { "右","左"},
+        Values = { "右侧","左侧"},
         Default = Library.NotifySide,
         Multi = false,
 
@@ -1829,6 +1864,16 @@ SettingsESP:AddToggle('RainbowESP', {
         ESPLibrary.GlobalConfig.Rainbow = Value
         UpdateAllESPConfig()
     end
+})
+
+SettingsESP:AddDropdown("TracerPosition", {
+    Values = {"Top", "Bottom", "Center", "Mouse"},
+    Default = ESPConfig.Tracer.Position,
+    Text = "追踪线位置",
+    Callback = function(Value)
+        ESPConfig.Tracer.Position = Value
+        RecreateAllESP()
+    end,
 })
 
 SettingsESP:AddSlider("TextSizeSlider", {
@@ -6128,7 +6173,7 @@ SettingsBox:AddDropdown("DPIDropdown", {
 })
 
 	local Contributors = Tabs.UISettings:AddRightGroupbox("开发人员")
-	Contributors:AddLabel("[总开发] 千Change",true)
+	Contributors:AddLabel("[总开发] 千change",true)
 
 SettingsBox:AddButton({
      Text = "卸载脚本",
