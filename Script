@@ -2743,7 +2743,7 @@ end
 })
 
 Anti:AddToggle('AntiScreech',{
-     Text = "Anti-Screech",
+     Text = "防 Screech",
      Default = false,
 Callback = function(Value)
 local Screech = Modules:FindFirstChild("Screech") or Modules:FindFirstChild("_Screech")
