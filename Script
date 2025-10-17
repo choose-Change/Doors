@@ -1099,9 +1099,9 @@ end
 
 
 
-Library.NotifySide = Library.IsMobile == true and "右侧" or "左侧"
+Library.NotifySide = Library.IsMobile == true and "Right" or "Left"
 SettingsBox:AddDropdown("LibraryNotifySide", {
-        Values = { "右侧","左侧"},
+        Values = { "Right","Left"},
         Default = Library.NotifySide,
         Multi = false,
 
@@ -3805,8 +3805,107 @@ end
 end
 
 
-function AddESP(inst,txt,color)
-ESPLibrary:AddESP(inst, txt, color)
+local function isPlayerOwnedItem(instance)
+    local current = instance
+    while current and current ~= workspace do
+        if current:IsA("Model") and Players:GetPlayerFromCharacter(current) then
+            return true
+        end
+        current = current.Parent
+    end
+    return false
+end
+
+function AddESP(inst, txt, color)
+    if isPlayerOwnedItem(inst) then
+        return
+    end
+    
+    if not inst or not inst.Parent then return end
+    
+    local model = inst
+    if inst:IsA("BasePart") and inst.Parent and inst.Parent:IsA("Model") then
+        model = inst.Parent
+    end
+    
+    if inst.Name == "Door" and inst.Parent and inst.Parent.Name == "Door" then
+        model = inst
+    end
+    
+    if isPlayerOwnedItem(model) then
+        return
+    end
+    
+    if ESPObjects[model] then
+        ESPObjects[model]:Hide()
+    end
+    
+    local espObject = ESPLibrary:Add({
+        Name = txt,
+        Model = model,
+        Color = color,
+        MaxDistance = 1000,
+        TextSize = ESPConfig.TextSize,
+        ESPType = "Highlight",
+        FillColor = color,
+        OutlineColor = color,
+        FillTransparency = ESPConfig.FillTransparency,
+        OutlineTransparency = ESPConfig.OutlineTransparency,
+        Tracer = { 
+            Enabled = ESPConfig.Tracer.Enabled,
+            Color = color,
+            From = ESPConfig.Tracer.Position
+        }
+    })
+    
+    ESPObjects[model] = espObject
+    espObject:Show()
+end
+
+function ESPLibrary:AddESP(Part, Txt, Color)
+    if isPlayerOwnedItem(Part) then
+        return
+    end
+    
+    if not Part or not Part.Parent then return end
+    
+    local model = Part
+    if Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
+        model = Part.Parent
+    end
+    
+    if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
+        model = Part
+    end
+    
+    if isPlayerOwnedItem(model) then
+        return
+    end
+    
+    if ESPObjects[model] then
+        ESPObjects[model]:Hide()
+    end
+    
+    local espObject = ESPLibrary:Add({
+        Name = Txt,
+        Model = model,
+        Color = Color,
+        MaxDistance = 1000,
+        TextSize = ESPConfig.TextSize,
+        ESPType = "Highlight",
+        FillColor = Color,
+        OutlineColor = Color,
+        FillTransparency = ESPConfig.FillTransparency,
+        OutlineTransparency = ESPConfig.OutlineTransparency,
+        Tracer = { 
+            Enabled = ESPConfig.Tracer.Enabled,
+            Color = Color,
+            From = ESPConfig.Tracer.Position
+        }
+    })
+    
+    ESPObjects[model] = espObject
+    espObject:Show()
 end
 
 
@@ -6324,7 +6423,7 @@ SettingsBox:AddDropdown("DPIDropdown", {
 })
 
 	local Contributors = Tabs.UISettings:AddRightGroupbox("开发人员")
-	Contributors:AddLabel("[总开发] 千change",true)
+	Contributors:AddLabel("[所有者] 千change",true)
 
 SettingsBox:AddButton({
      Text = "卸载脚本",
