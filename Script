@@ -599,7 +599,7 @@ local Connections = {}
 
 
 Window = Library:CreateWindow({
-    Title = '💠 Starring',
+    Title = '💠 Starring V2',
     Footer = "感觉我自己好帅",
     Center = true,
     AutoShow = true
@@ -3037,37 +3037,76 @@ end
 	})
 
 
+Bypass:AddDropdown("AnticheatManipulationMode", {
+    Values = {"瞬移", "坐标", "移动"},
+    Default = "瞬移",
+    Multi = false,
+    Text = "纵轴穿墙模式",
+    Callback = function(Value)
+        if Toggles.AnticheatManipulation and Toggles.AnticheatManipulation.Value then
+            Toggles.AnticheatManipulation:SetValue(false)
+            task.wait(0.1)
+            Toggles.AnticheatManipulation:SetValue(true)
+        end
+    end,
+})
+
 local AnticheatManipulationLoop = nil
 local AnticheatManipulationOrigin = nil
 local AnticheatManipulationEnabled = false
+local OriginalNoclipState = false
 
 Bypass:AddToggle('AnticheatManipulation',{
      Text = "纵轴穿墙",
      Default = false,
      Callback = function(Value)
         if Value then
-            AnticheatManipulationOrigin = LocalPlayer.Character.HumanoidRootPart.Position
             AnticheatManipulationEnabled = true
+            
+            if Options.AnticheatManipulationMode and Options.AnticheatManipulationMode.Value == "移动" then
+                OriginalNoclipState = Toggles.Noclip and Toggles.Noclip.Value or false
+                if Toggles.Noclip then
+                    Toggles.Noclip:SetValue(true)
+                end
+            end
             
             AnticheatManipulationLoop = task.spawn(function()
                 while AnticheatManipulationEnabled and Toggles.AnticheatManipulation.Value do
-                    if alive and AnticheatManipulationOrigin then
-                        local lookVector = LocalPlayer.Character.HumanoidRootPart.CFrame.LookVector
+                    if alive then
+                        local character = LocalPlayer.Character
+                        local humanoidRootPart = character.HumanoidRootPart
+                        local lookVector = humanoidRootPart.CFrame.LookVector
                         
-                        local backwardPosition = LocalPlayer.Character.HumanoidRootPart.Position - lookVector * 10000
-                        Character:PivotTo(CFrame.new(backwardPosition))
-                        task.wait(0.03)
-                        
-                        local forwardPosition = AnticheatManipulationOrigin + lookVector * 1
-                        Character:PivotTo(CFrame.new(forwardPosition))
-                        
-                        AnticheatManipulationOrigin = forwardPosition
+                        if Options.AnticheatManipulationMode and Options.AnticheatManipulationMode.Value == "瞬移" then
+                            if not AnticheatManipulationOrigin then
+                                AnticheatManipulationOrigin = humanoidRootPart.Position
+                            end
+                            
+                            local backwardPosition = humanoidRootPart.Position - lookVector * 10000
+                            character:PivotTo(CFrame.new(backwardPosition))
+                            task.wait(0.03)
+                            
+                            local forwardPosition = AnticheatManipulationOrigin + lookVector * 1
+                            character:PivotTo(CFrame.new(forwardPosition))
+                            
+                            AnticheatManipulationOrigin = forwardPosition
+                            task.wait(0.07)
+                        elseif Options.AnticheatManipulationMode and Options.AnticheatManipulationMode.Value == "坐标" then
+                            local backwardPosition = humanoidRootPart.Position - (lookVector * 10000)
+                            character:PivotTo(CFrame.new(backwardPosition))
+                            task.wait(0.07)
+                        else
+                            local forwardPosition = humanoidRootPart.Position + (lookVector * 0.012)
+                            character:PivotTo(CFrame.new(forwardPosition))
+                            task.wait()
+                        end
+                    else
+                        task.wait()
                     end
-                    task.wait(0.07)
                 end
                 
-                if alive and AnticheatManipulationOrigin then
-                    Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
+                if alive and AnticheatManipulationOrigin and Options.AnticheatManipulationMode and Options.AnticheatManipulationMode.Value == "瞬移" then
+                    character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
                 end
             end)
         else
@@ -3078,24 +3117,28 @@ Bypass:AddToggle('AnticheatManipulation',{
                 AnticheatManipulationLoop = nil
             end
             
-            if alive and AnticheatManipulationOrigin then
-                Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
+            if Options.AnticheatManipulationMode and Options.AnticheatManipulationMode.Value == "移动" and Toggles.Noclip then
+                Toggles.Noclip:SetValue(OriginalNoclipState)
+            end
+            
+            if alive and AnticheatManipulationOrigin and Options.AnticheatManipulationMode and Options.AnticheatManipulationMode.Value == "瞬移" then
+                LocalPlayer.Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
             end
             
             AnticheatManipulationOrigin = nil
         end
      end
 }):AddKeyPicker('AnticheatManipulationKeybind', {
-		Default = 'H',
-		SyncToggleState = true,
-		Mode = 'Toggle',
-		Text = '纵轴穿墙',
-		NoUI = false,
-		Callback = function(Value)
-		end,
-		ChangedCallback = function(New)
-		end
-	})
+    Default = 'H',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = '纵轴穿墙',
+    NoUI = false,
+    Callback = function(Value)
+    end,
+    ChangedCallback = function(New)
+    end
+})
 
 
 FloorAnti:AddToggle('RankedAntiBanana',{
@@ -3274,33 +3317,77 @@ local clones = {}
 		})
 
 function showpath(part)
-if part.Name == "SeekGuidingLight" then
-local Part = Instance.new("Part",Pathnode)
-Part.Name = "ShowPath"
-Part.Position = part.Position
-Part.Size = Vector3.new(2, 1, 2)
-Part.Anchored = true
-Part.CanCollide = false
-Part.CanTouch = false
-Part.CanQuery = true
-Debris:AddItem(Part, 150)
+    if part.Name == "SeekGuidingLight" and Toggles.ShowSeekPath and Toggles.ShowSeekPath.Value then
+        local Part = Instance.new("Part", Pathnode)
+        Part.Name = "ShowPath"
+        Part.Position = part.Position
+        Part.Size = Vector3.new(2, 2, 2)
+        Part.Shape = Enum.PartType.Ball
+        Part.Color = Color3.new(0, 1, 0)
+        Part.Material = Enum.Material.Neon
+        Part.Anchored = true
+        Part.CanCollide = false
+        Part.CanTouch = false
+        Part.CanQuery = true
+        Debris:AddItem(Part, 150)
+        
+        local nextLight = findNextSeekGuidingLight(part)
+        if nextLight then
+            for i = 1, 5 do
+                local t = i / 6
+                local interpPos = part.Position:Lerp(nextLight.Position, t)
+                
+                local smallPart = Instance.new("Part", Pathnode)
+                smallPart.Name = "ShowPath"
+                smallPart.Position = interpPos
+                smallPart.Size = Vector3.new(0.8, 0.8, 0.8)
+                smallPart.Shape = Enum.PartType.Ball
+                smallPart.Color = Color3.new(0, 0.8, 0)
+                smallPart.Material = Enum.Material.Neon
+                smallPart.Anchored = true
+                smallPart.CanCollide = false
+                smallPart.CanTouch = false
+                smallPart.CanQuery = true
+                Debris:AddItem(smallPart, 150)
+            end
+        end
+    end
 end
 
+local function findNextSeekGuidingLight(currentLight)
+    local allLights = {}
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v.Name == "SeekGuidingLight" then
+            table.insert(allLights, v)
+        end
+    end
+    
+    table.sort(allLights, function(a, b)
+        return a.Position.X < b.Position.X or 
+               (a.Position.X == b.Position.X and a.Position.Z < b.Position.Z)
+    end)
+    
+    for i, light in ipairs(allLights) do
+        if light == currentLight and i < #allLights then
+            return allLights[i + 1]
+        end
+    end
+    
+    return nil
 end
-
 
 FloorAnti:AddToggle("ShowSeekPath", {
-			Text = "显示追逐战路径",
-			Default = false,
-			Callback = function(Value)
-if Value then
-for _, v in ipairs(workspace:GetDescendants()) do
-showpath(v)
-end
-else
-Pathnode:ClearAllChildren()
-end
-end
+    Text = "显示追逐战路径",
+    Default = false,
+    Callback = function(Value)
+        if Value then
+            for _, v in ipairs(workspace:GetDescendants()) do
+                showpath(v)
+            end
+        else
+            Pathnode:ClearAllChildren()
+        end
+    end
 })
 
 
@@ -3503,6 +3590,66 @@ if Floor.Value == "Mines" then
             performMinecartRename()
         end
     end
+end
+
+if Floor.Value == "Mines" then
+    FloorAnti:AddToggle('MinecartNoCollision', {
+        Text = "矿车无碰撞",
+        Default = false,
+        Callback = function(Value)
+            if Value then
+                for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+                    local assets = room:FindFirstChild("Assets")
+                    if assets then
+                        local minecartSet = assets:FindFirstChild("MinecartSet")
+                        if minecartSet then
+                            for _, child in ipairs(minecartSet:GetChildren()) do
+                                local cart = child:FindFirstChild("Cart")
+                                if cart and cart:IsA("BasePart") then
+                                    cart.CanCollide = false
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                if not minecartConnection then
+                    minecartConnection = workspace.DescendantAdded:Connect(function(descendant)
+                        if Toggles.MinecartNoCollision and Toggles.MinecartNoCollision.Value then
+                            if descendant.Name == "Cart" and descendant:IsA("BasePart") then
+                                local parent = descendant.Parent
+                                if parent and parent.Parent and parent.Parent.Name == "MinecartSet" then
+                                    descendant.CanCollide = false
+                                end
+                            end
+                        end
+                    end)
+                end
+            else
+                for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+                    local assets = room:FindFirstChild("Assets")
+                    if assets then
+                        local minecartSet = assets:FindFirstChild("MinecartSet")
+                        if minecartSet then
+                            for _, child in ipairs(minecartSet:GetChildren()) do
+                                local cart = child:FindFirstChild("Cart")
+                                if cart and cart:IsA("BasePart") then
+                                    cart.CanCollide = true
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                if minecartConnection then
+                    minecartConnection:Disconnect()
+                    minecartConnection = nil
+                end
+            end
+        end
+    })
+    
+    local minecartConnection = nil
 end
 
 local RankedAntiBananaConnection = nil
@@ -5792,6 +5939,10 @@ print("hi2")
 
 
 function Unload()
+if minecartConnection then
+    minecartConnection:Disconnect()
+    minecartConnection = nil
+end
 if ESPLibrary and ESPLibrary.GlobalConfig then
 ESPLibrary.GlobalConfig.Rainbow = false
 end
