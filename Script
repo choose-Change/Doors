@@ -616,10 +616,6 @@ Addons = Window:AddTab('插件', 'boxes'),
 }
 
 
-
-
-AddonBox = Tabs.Addons:AddLeftGroupbox('插件')
-
 local TabBox = Tabs.Player:AddLeftTabbox() 
 
 local Movement = TabBox:AddTab("移动")
@@ -859,37 +855,6 @@ end
 end
 })
 
-local autoGlitchEnabled = false
-local autoGlitchConnection = nil
-
-ModifiersBox:AddToggle('AutoGlitch', {
-    Text = "自动故障",
-    Default = false,
-    Callback = function(Value)
-        autoGlitchEnabled = Value
-        
-        if autoGlitchEnabled then
-            autoGlitchConnection = RunService.Heartbeat:Connect(function()
-                if autoGlitchEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local character = LocalPlayer.Character
-                    local humanoidRootPart = character.HumanoidRootPart
-                    
-                    local lookVector = humanoidRootPart.CFrame.LookVector
-                    
-                    local teleportPosition = humanoidRootPart.Position + (lookVector * 10000)
-                    
-                    character:PivotTo(CFrame.new(teleportPosition))
-                end
-            end)
-        else
-            if autoGlitchConnection then
-                autoGlitchConnection:Disconnect()
-                autoGlitchConnection = nil
-            end
-        end
-    end
-})
-
 if ReplicatedStorage:FindFirstChild("EntityInfo") or ReplicatedStorage:FindFirstChild("Bricks") then
 
 FloorAnti:AddToggle('AntiBanana',{
@@ -1125,21 +1090,17 @@ end
 
 
 
-Library.NotifySide = Library.IsMobile == true and "Right" or "Left"
-SettingsBox:AddDropdown("LibraryNotifySide", {
-        Values = { "Right","Left"},
-        Default = Library.NotifySide,
-        Multi = false,
+SettingsBox:AddDropdown("NotificationSide", {
+	Values = { "Left", "Right" },
+	Default = "Right",
 
-        Text = "通知位置",
-        
+	Text = "通知位置",
 
-        Callback = function(Value)
-               Library.NotifySide = Value
-        end,
-
-        
+	Callback = function(Value)
+		Library:SetNotifySide(Value)
+	end,
 })
+
 local OptionNotify = "Obsidian"
 function Notify(txt,desc,reason)
 if OptionNotify then 
@@ -2014,17 +1975,14 @@ end
 	})
 
 Automation:AddDropdown("IgnoreList", {
-        Values = {"Jeff物品","金币","丢弃物品","故障方块"},
-        Default = 1,
-        Multi = true,
-        Text = "忽略列表",
-        
-
-        Callback = function(Value)
-               
-        end,
-
-        
+    Values = {"Jeff物品","金币","丢弃物品","故障方块","死亡糖果"},
+    Default = 1,
+    Multi = true,
+    Text = "忽略列表",
+    
+    Callback = function(Value)
+           
+    end,
 })
 
 Automation:AddDivider()
@@ -2567,7 +2525,37 @@ Automation:AddToggle('AutoCloset',{
 		end
 	})
 
-Movement:AddDivider()
+local autoGlitchEnabled = false
+local autoGlitchConnection = nil
+
+Automation:AddToggle('AutoGlitch', {
+    Text = "自动故障",
+    Default = false,
+    Callback = function(Value)
+        autoGlitchEnabled = Value
+        
+        if autoGlitchEnabled then
+            autoGlitchConnection = RunService.Heartbeat:Connect(function()
+                if autoGlitchEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local character = LocalPlayer.Character
+                    local humanoidRootPart = character.HumanoidRootPart
+                    
+                    local lookVector = humanoidRootPart.CFrame.LookVector
+                    
+                    local teleportPosition = humanoidRootPart.Position + (lookVector * 10000)
+                    
+                    character:PivotTo(CFrame.new(teleportPosition))
+                end
+            end)
+        else
+            if autoGlitchConnection then
+                autoGlitchConnection:Disconnect()
+                autoGlitchConnection = nil
+            end
+        end
+    end
+})
+
 Movement:AddToggle('Noacceleration',{
      Text = "无打滑",
      Default = false
@@ -3696,7 +3684,6 @@ ModifiersBox:AddToggle('AntiLookman',{
      Text = "防 Lookman",
      Default = false
 })
-ModifiersBox:AddDivider()
 
 
 ModifiersBox:AddToggle('AntiFog',{
@@ -3750,29 +3737,29 @@ ModifiersBox:AddToggle('AntiJam',{
      Default = false,
 Callback = function(Value)
 
-		if Modifiers and not Modifiers:FindFirstChild("Jammin") then return end
-		local mainTrack = game["SoundService"]:FindFirstChild("Main")
-		if mainTrack then
-			local jamming = mainTrack:FindFirstChild("Jamming")
-			if jamming then
-				jamming.Enabled = not Value
-			end
-		end
+if Modifiers and not Modifiers:FindFirstChild("Jammin") then return end
+local mainTrack = game["SoundService"]:FindFirstChild("Main")
+if mainTrack then
+local jamming = mainTrack:FindFirstChild("Jamming")
+if jamming then
+jamming.Enabled = not Value
+end
+end
 
-		local mainUI = LocalPlayer:FindFirstChild("PlayerGui")
-			and LocalPlayer.PlayerGui:FindFirstChild("MainUI")
-		if mainUI then
-			local healthGui = mainUI:FindFirstChild("Initiator")
-				and mainUI.Initiator:FindFirstChild("Main_Game")
-				and mainUI.Initiator.Main_Game:FindFirstChild("Health")
-			if healthGui then
-				local jamSound = healthGui:FindFirstChild("Jam")
-				if jamSound then
-					jamSound.Playing = not Value
-				end
-			end
-		end
-	end
+local mainUI = LocalPlayer:FindFirstChild("PlayerGui")
+and LocalPlayer.PlayerGui:FindFirstChild("MainUI")
+if mainUI then
+local healthGui = mainUI:FindFirstChild("Initiator")
+and mainUI.Initiator:FindFirstChild("Main_Game")
+and mainUI.Initiator.Main_Game:FindFirstChild("Health")
+if healthGui then
+local jamSound = healthGui:FindFirstChild("Jam")
+if jamSound then
+jamSound.Playing = not Value
+end
+end
+end
+end
 })
 
 ModifiersBox:AddToggle('AntiGloomPile',{
@@ -3804,6 +3791,36 @@ end
 end 
 })
 
+ModifiersBox:AddToggle('NoBatDecor',{
+     Text = "无蝙蝠装饰",
+     Default = false,
+Callback = function(Value)
+if Value then
+for _, decor in ipairs(workspace:GetDescendants()) do
+if decor.Name == "HangingHalloweenDecor" and decor:IsA("Model") then
+decor:Destroy()
+end
+end
+             
+if not batDecorConnection then
+batDecorConnection = workspace.DescendantAdded:Connect(function(descendant)
+if Toggles.NoBatDecor and Toggles.NoBatDecor.Value then
+if descendant.Name == "HangingHalloweenDecor" and descendant:IsA("Model") then
+descendant:Destroy()
+end
+end
+end)
+end
+else
+if batDecorConnection then
+batDecorConnection:Disconnect()
+batDecorConnection = nil
+end
+end
+end
+})
+
+local batDecorConnection = nil
 
 if Floor.Value == "Garden" then
 
@@ -3836,8 +3853,21 @@ end
 local function isPlayerOwnedItem(instance)
     local current = instance
     while current and current ~= workspace do
-        if current:IsA("Model") and Players:GetPlayerFromCharacter(current) then
-            return true
+        if current:IsA("Model") then
+            local player = Players:GetPlayerFromCharacter(current)
+            if player and player == LocalPlayer then
+                return true
+            end
+            if current:IsA("Tool") then
+                local owner = current:FindFirstChild("Owner")
+                if owner and owner.Value then
+                    return true
+                end
+                local parent = current.Parent
+                if parent and (parent:IsA("Backpack") or (parent:IsA("Model") and Players:GetPlayerFromCharacter(parent))) then
+                    return true
+                end
+            end
         end
         current = current.Parent
     end
@@ -5361,6 +5391,11 @@ if Toggles.AutoInteract.Value then
                         if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList.Value["金币"] then return end
                         if prompt.Parent:GetAttribute("JeffShop")  and Options.IgnoreList.Value["Jeff物品"] then return end
                         if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList.Value["丢弃物品"] then return end
+                        
+                        if prompt.Parent and prompt.Parent.Name == "Candy" and prompt.Parent:GetAttribute("Tool_CandyID") == "CandyRed" and Options.IgnoreList.Value["死亡糖果"] then
+                            return
+                        end
+                        
                         if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then return end
                         if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then return end
                         if prompt.Parent and prompt.Parent.Name == "Padlock" then return end
