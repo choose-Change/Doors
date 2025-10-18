@@ -1023,6 +1023,32 @@ setfpscap(Value and 9999999 or 60)
 end
 })
 
+SettingsBox:AddToggle('WatermarkToggle',{
+     Text = "显示水印",
+     Default = false,
+     Callback = function(Value)
+        Library:SetWatermarkVisibility(Value)
+     end
+})
+
+local FrameTimer = tick()
+local FrameCounter = 0;
+local FPS = 60;
+ 
+local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
+    FrameCounter += 1;
+ 
+    if (tick() - FrameTimer) >= 1 then
+        FPS = FrameCounter;
+        FrameTimer = tick();
+        FrameCounter = 0;
+    end;
+ 
+    Library:SetWatermark(('Starring User | %s FPS | %s ms'):format(
+        math.floor(FPS),
+        math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
+    ));
+end);
 
 local DropTable = {
 RushMoving = 54,
@@ -1475,7 +1501,7 @@ Camera:AddToggle('SpectateEntity',{
 })
 
 NotifyBox:AddDropdown("EntitiesPicker", {
-        Values = { "Rush","Ambush","A-60","A-120","Bramble","Grumble","Eyes","Lookman","Blitz","Figure","GlitchRush","GlitchAmbush","Monument","Groundskeeper"},
+        Values = { "Rush","Ambush","A-60","A-120","Bramble","Grumble","Eyes","Lookman","Blitz","Figure","GlitchRush","GlitchAmbush","Monument","Groundskeeper","Seek"},
         Default = 1,
         Multi = true,
 
@@ -1507,34 +1533,36 @@ NotifyBox:AddToggle('NotifyChat',{
                 local Workspace = game:GetService("Workspace")
                 
                 local entityNameMap = {
-                    Rush = "Rush",
-                    Ambush = "Ambush", 
-                    ["A-60"] = "A-60",
-                    ["A-120"] = "A-120",
-                    Bramble = "Bramble",
-                    Grumble = "Grumble",
-                    Eyes = "Eyes",
-                    Lookman = "Lookman",
-                    Blitz = "Blitz",
-                    Figure = "Figure",
-                    Monument = "Monument",
-                    Groundskeeper = "Groundskeeper"
-                }
+    Rush = "Rush",
+    Ambush = "Ambush", 
+    ["A-60"] = "A-60",
+    ["A-120"] = "A-120",
+    Bramble = "Bramble",
+    Grumble = "Grumble",
+    Eyes = "Eyes",
+    Lookman = "Lookman",
+    Blitz = "Blitz",
+    Figure = "Figure",
+    Monument = "Monument",
+    Groundskeeper = "Groundskeeper",
+    Seek = "Seek"
+}
                 
                 local entityModelMap = {
-                    Rush = "RushMoving",
-                    Ambush = "AmbushMoving",
-                    ["A-60"] = "A60",
-                    ["A-120"] = "A120",
-                    Bramble = "LiveEntityBramble",
-                    Grumble = "GrumbleRig",
-                    Eyes = "Eyes",
-                    Lookman = "BackdoorLookman",
-                    Blitz = "BackdoorRush",
-                    Figure = "FigureRig",
-                    Monument = "MonumentEntity",
-                    Groundskeeper = "Groundskeeper"
-                }
+    Rush = "RushMoving",
+    Ambush = "AmbushMoving",
+    ["A-60"] = "A60",
+    ["A-120"] = "A120",
+    Bramble = "LiveEntityBramble",
+    Grumble = "GrumbleRig",
+    Eyes = "Eyes",
+    Lookman = "BackdoorLookman",
+    Blitz = "BackdoorRush",
+    Figure = "FigureRig",
+    Monument = "MonumentEntity",
+    Groundskeeper = "Groundskeeper",
+    Seek = "SeekMovingNewClone"
+}
                 
                 local detectedInstances = {}
                 
@@ -3340,9 +3368,9 @@ function showpath(part)
                 local smallPart = Instance.new("Part", Pathnode)
                 smallPart.Name = "ShowPath"
                 smallPart.Position = interpPos
-                smallPart.Size = Vector3.new(0.8, 0.8, 0.8)
+                smallPart.Size = Vector3.new(2, 2, 2)
                 smallPart.Shape = Enum.PartType.Ball
-                smallPart.Color = Color3.new(0, 0.8, 0)
+                smallPart.Color = Color3.new(0, 1, 0)
                 smallPart.Material = Enum.Material.Neon
                 smallPart.Anchored = true
                 smallPart.CanCollide = false
@@ -4857,6 +4885,11 @@ Notify("Monument 已生成",3)
 Sound()
 end
 
+if v.Name == "SeekMovingNewClone" and Options.EntitiesPicker.Value["Seek"] then
+Notify("Seek发射器 已生成",3)
+Sound()
+end
+
 end
 if Toggles.EntitesESP.Value then
 if v.Name == "RushMoving" and Options.EntitiesPicker.Value["Rush"] then
@@ -5290,54 +5323,60 @@ end
 end
 
 if Toggles.AutoInteract.Value then
-for _, prompt in ipairs(AutoInteractTable) do
-if prompt and prompt.Parent then
+    for _, prompt in ipairs(AutoInteractTable) do
+        if prompt and prompt.Parent then
+            local check = prompt:GetAttribute("Interactions")
+            
+            local isMinesGateButton = prompt.Parent and prompt.Parent.Name == "Button" and 
+                                     prompt.Parent.Parent and prompt.Parent.Parent.Name == "MinesGateButton"
+            
+            local isFusesPrompt = prompt.Name == "FusesPrompt"
+            
+            local isMinesAnchorPrompt = prompt.Parent and prompt.Parent.Name == "MinesAnchor" and prompt.Name == "ActivateEventPrompt"
+            
+            if isMinesGateButton or isFusesPrompt or (not check or check < 1) then
+                if isMinesAnchorPrompt then
+                    return
+                end
+                
+                local Base
+                if prompt.Parent:IsA("BasePart") then
+                    Base = prompt.Parent
+                elseif prompt.Parent.Parent and prompt.Parent.Parent:IsA("BasePart") then
+                    Base = prompt.Parent.Parent
+                elseif prompt.Parent and prompt.Parent:FindFirstChildWhichIsA("BasePart") then
+                    Base = prompt.Parent:FindFirstChildWhichIsA("BasePart")
+                else
+                    if prompt.Parent.Parent and prompt.Parent.Parent:FindFirstChildOfClass("BasePart") then
+                        Base = prompt.Parent.Parent:FindFirstChildOfClass("BasePart")
+                    end
+                end
+                
+                if Base and (LocalPlayer.Character.HumanoidRootPart.Position - Base.Position).Magnitude < prompt.MaxActivationDistance then
+                    
+                    if not (isMinesGateButton or isFusesPrompt) then
+                        if prompt.Parent and prompt.Parent.Name == "GlitchCube" and Options.IgnoreList.Value["故障方块"] then
+                            return
+                        end
+                        if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList.Value["金币"] then return end
+                        if prompt.Parent:GetAttribute("JeffShop")  and Options.IgnoreList.Value["Jeff物品"] then return end
+                        if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList.Value["丢弃物品"] then return end
+                        if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then return end
+                        if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then return end
+                        if prompt.Parent and prompt.Parent.Name == "Padlock" then return end
+                        if prompt.Parent and prompt.Parent.Name == "KeyObtainFake" then return end
+                        if isMinesAnchorPrompt then
+                            return
+                        end
+                    end
 
-local check = prompt:GetAttribute("Interactions")
-if not check or check < 1 then
-local Base
-if prompt.Parent:IsA("BasePart") then
-Base = prompt.Parent
-elseif prompt.Parent.Parent and  prompt.Parent.Parent:IsA("BasePart") then
-Base = prompt.Parent.Parent
-elseif prompt.Parent and  prompt.Parent:FindFirstChildWhichIsA("BasePart") then
-Base = prompt.Parent:FindFirstChildWhichIsA("BasePart")
-else
-if prompt.Parent.Parent and prompt.Parent.Parent:FindFirstChildOfClass("BasePart") then
-Base = prompt.Parent.Parent:FindFirstChildOfClass("BasePart")
-end
-end
-if Base and (LocalPlayer.Character.HumanoidRootPart.Position - Base.Position).Magnitude < prompt.MaxActivationDistance then
-
-if prompt.Parent and prompt.Parent.Name == "GlitchCube" and Options.IgnoreList.Value["故障方块"] then
-    return
-end
-if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList.Value["金币"] then return end
-if prompt.Parent:GetAttribute("JeffShop")  and Options.IgnoreList.Value["Jeff物品"] then return end
-if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList.Value["丢弃物品"] then return end
-if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then return end
-if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then return end
-
-
-if prompt.Parent and prompt.Parent.Name == "Padlock" then return end
-
-if prompt.Parent and prompt.Parent.Name == "KeyObtainFake" then return end
-
-
-
-
-if prompt.ClickablePrompt then
-
-fireInteract(prompt)
-
-end
-end
-
-
-
-end
-end
-end
+                    if prompt.ClickablePrompt then
+                        fireInteract(prompt)
+                    end
+                end
+            end
+        end
+    end
 end
 
 
@@ -5736,30 +5775,27 @@ Collision = true
 }
 
  table.insert(Connections,
- workspace.DescendantAdded:Connect(function(v)
-    
-local Delay = math.random(200, 270) / 1000
-task.wait(Delay)
+workspace.DescendantAdded:Connect(function(v)
+    local Delay = math.random(200, 270) / 1000
+    task.wait(Delay)
 
-
-
-
-
-
-
-
-
-if   v:IsA("ProximityPrompt") then
-
-if Toggles.AutoInteract.Value then
-if v then
-if not Ignore[v.Name] then
-if v:IsA("ProximityPrompt") then
-table.insert(AutoInteractTable,v)
-end
-end
-end
-end
+    if v:IsA("ProximityPrompt") then
+        local isMinesGateButton = v.Parent and v.Parent.Name == "Button" and 
+                                 v.Parent.Parent and v.Parent.Parent.Name == "MinesGateButton"
+        
+        local isFusesPrompt = v.Name == "FusesPrompt"
+        
+        local isMinesAnchorPrompt = v.Parent and v.Parent.Name == "MinesAnchor" and v.Name == "ActivateEventPrompt"
+        
+        if Toggles.AutoInteract.Value then
+            if v and (not Ignore[v.Name] or isMinesGateButton or isFusesPrompt) then
+                if not isMinesAnchorPrompt then
+                    if v:IsA("ProximityPrompt") then
+                        table.insert(AutoInteractTable, v)
+                    end
+                end
+            end
+        end
 
 
 if Toggles.PromptReach.Value then
@@ -6038,6 +6074,10 @@ print("hi2")
 
 
 function Unload()
+if WatermarkConnection then
+    WatermarkConnection:Disconnect()
+    WatermarkConnection = nil
+end
 if minecartConnection then
     minecartConnection:Disconnect()
     minecartConnection = nil
