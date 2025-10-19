@@ -639,7 +639,7 @@ local ReachBox = Tabs.Player:AddRightGroupbox('距离')
 
 
 
-FloorAnti = Tabs.Floor:AddLeftGroupbox('防止实体')
+FloorAnti = Tabs.Floor:AddLeftGroupbox('楼层绕过')
 
 
 ModifiersBox = Tabs.Floor:AddLeftGroupbox('修饰符')
@@ -1762,7 +1762,25 @@ Disabled = Disable3,
 })
 end
 
-Movement:AddDivider()
+InfiniteBox:AddDivider()
+
+InfiniteBox:AddButton({
+	Text = "启用黄色裂缝",
+	Func = function()
+		local Event = game:GetService("ReplicatedStorage").ReplicaRemoteEvents.Replica_ReplicaSetValue
+		firesignal(Event.OnClientEvent, 
+			2,
+			{
+				"StarRiftItem"
+			},
+			{
+				Exists = true
+			}
+		)
+		Library:Notify("黄色裂缝已启用", 3)
+	end
+})
+
  Speed = 15
 Movement:AddSlider("SpeedBoostSlider", {
         Text = "移动速度滑块",
@@ -1770,12 +1788,27 @@ Movement:AddSlider("SpeedBoostSlider", {
         Min = 15,
         Max = 21,
         Rounding = 1,
-        Compact = false,
 
         Callback = function(Value)
            Speed = Value
 
      end,      
+})
+
+local MaxSlopeAngle = 45
+Movement:AddSlider("MaxSlopeAngleSlider", {
+    Text = "最大斜坡角度",
+    Default = 45,
+    Min = 0,
+    Max = 90,
+    Rounding = 0,
+    Compact = true,
+    Callback = function(Value)
+        MaxSlopeAngle = Value
+        if Character and Character:FindFirstChild("Humanoid") then
+            Character.Humanoid.MaxSlopeAngle = Value
+        end
+    end,
 })
 
 Movement:AddToggle('SpeedBoost',{
@@ -1871,6 +1904,7 @@ SettingsESP:AddSlider("TextSizeSlider", {
     Min = 10,
     Max = 50,
     Rounding = 0,
+    Compact = true,
     Callback = function(Value)
         ESPConfig.TextSize = Value
         UpdateAllESPConfig()
@@ -3169,6 +3203,57 @@ end
 end
 end
 })
+
+if Floor.Value == "Hotel" then
+    local noPuzzleDoorsRunning = false
+    local noPuzzleDoorsConnection = nil
+    
+    FloorAnti:AddToggle('NoPuzzleDoors', {
+        Text = "无谜题门",
+        Default = false,
+        Callback = function(Value)
+            if Value then
+                noPuzzleDoorsRunning = true
+                
+                for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+                    local movingDoor = room:FindFirstChild("MovingDoor", true)
+                    if movingDoor then
+                        movingDoor:Destroy()
+                    end
+                end
+                
+                noPuzzleDoorsConnection = RunService.Heartbeat:Connect(function()
+                    if not noPuzzleDoorsRunning then return end
+                    
+                    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+                        local movingDoor = room:FindFirstChild("MovingDoor", true)
+                        if movingDoor then
+                            movingDoor:Destroy()
+                        end
+                    end
+                end)
+                
+                workspace.CurrentRooms.ChildAdded:Connect(function(room)
+                    if not noPuzzleDoorsRunning then return end
+                    task.wait(0.5)
+                    
+                    local movingDoor = room:FindFirstChild("MovingDoor", true)
+                    if movingDoor then
+                        movingDoor:Destroy()
+                    end
+                end)
+                
+            else
+                noPuzzleDoorsRunning = false
+                if noPuzzleDoorsConnection then
+                    noPuzzleDoorsConnection:Disconnect()
+                    noPuzzleDoorsConnection = nil
+                end
+            end
+        end
+    })
+end
+
 FloorAnti:AddDivider()
 
 
