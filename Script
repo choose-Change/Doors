@@ -2009,7 +2009,7 @@ end
 	})
 
 Automation:AddDropdown("IgnoreList", {
-    Values = {"Jeff物品","金币","丢弃物品","故障方块","死亡糖果","捣蛋敲门"},
+    Values = {"Jeff物品","金币","糖果","丢弃物品","故障方块","死亡糖果","捣蛋敲门","Grampy物品"},
     Default = 1,
     Multi = true,
     Text = "忽略列表",
@@ -3202,6 +3202,29 @@ end
 end
 })
 
+FakeSurge = Instance.new("RemoteEvent",ReplicatedStorage)
+FakeSurge.Name = "SurgeRemote"
+
+FloorAnti:AddToggle('AntiSurge',{
+     Text = "防 Surge",
+     Default = false,
+    Callback = function(Value)
+if Value then
+
+ReplicatedStorage.RemotesFolder.SurgeRemote.Parent = ReplicatedStorage
+FakeSurge.Parent = ReplicatedStorage.RemotesFolder
+
+else
+
+ReplicatedStorage.RemotesFolder.SurgeRemote.Parent = ReplicatedStorage.RemotesFolder
+FakeSurge.Parent = ReplicatedStorage
+
+
+end
+
+end
+})
+
 if Floor.Value == "Hotel" then
     local noPuzzleDoorsRunning = false
     local noPuzzleDoorsConnection = nil
@@ -3932,30 +3955,6 @@ end
 local batDecorConnection = nil
 
 
-FakeSurge = Instance.new("RemoteEvent",ReplicatedStorage)
-FakeSurge.Name = "SurgeRemote"
-
-FloorAnti:AddToggle('AntiSurge',{
-     Text = "防 Surge",
-     Default = false,
-    Callback = function(Value)
-if Value then
-
-ReplicatedStorage.RemotesFolder.SurgeRemote.Parent = ReplicatedStorage
-FakeSurge.Parent = ReplicatedStorage.RemotesFolder
-
-else
-
-ReplicatedStorage.RemotesFolder.SurgeRemote.Parent = ReplicatedStorage.RemotesFolder
-FakeSurge.Parent = ReplicatedStorage
-
-
-end
-
-end
-})
-
-
 local function isPlayerOwnedItem(instance)
     local current = instance
     while current and current ~= workspace do
@@ -4084,8 +4083,10 @@ local HidingSpotColor = Color3.new(0,0.5,0)
 local LeverColor = Color3.new(0,1,0)
 local BooksColor = Color3.new(0,1,0)
 local BreakerColor = Color3.new(0,1,0)
-local ItemsColor = Color3.new(0,0,1)
+local ItemsColor = Color3.new(1,0,1)
+local ChestColor = Color3.new(1, 0.8, 0)
 local GoldColor = Color3.new(1, 0.8, 0)
+local StardustColor = Color3.fromRGB(230, 116, 126)
 local FuseColor = Color3.new(0,1,0)
 local AnchorColor =  Color3.new(0,0,1)
 
@@ -4299,7 +4300,7 @@ Callback = function(Value)
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
 
 if v.Name == "Ladder" then
-AddESP(v,"梯子",Color3.new(0,3,2))
+AddESP(v,"梯子",Color3.new(0,0,1))
 end
 
 end
@@ -4712,12 +4713,7 @@ TipJar = "小费罐",
 LotusPetalPickup = "莲花花瓣",
 KeyIron = "铁钥匙",
 CandyBag = "糖果袋子",
-Donut = "甜甜圈",
-Toolshed_Small = "剪刀柜子",
-Chest_Vine = "[藤蔓] 箱子",
-ChestBoxLocked = "[上锁] 箱子",
-ChestBox = "箱子",
-StardustPickup = "星尘"
+Donut = "甜甜圈"
 
 }
 ESP:AddToggle('Items',{
@@ -4750,11 +4746,56 @@ end
 	Callback = function(Value)
 		ItemsColor = Value
 if Toggles.Items.Value then
-
-Toggles.Items:SetValue(false)
-Toggles.Items:SetValue(true)
-
+    Toggles.Items:SetValue(false)
+    Toggles.Items:SetValue(true)
 end
+end
+})
+
+ESP:AddToggle('Chest',{
+     Text = "箱子",
+     Default = false,
+Callback = function(Value)
+if Value then
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            for _, v in ipairs(room:GetDescendants()) do
+                if v.Name == "Toolshed_Small" or v.Name == "Chest_Vine" or v.Name == "ChestBoxLocked" or v.Name == "ChestBox" then
+                    local displayText = "箱子"
+                    if v.Name == "Chest_Vine" then
+                        displayText = "[藤蔓] 箱子"
+                    elseif v.Name == "ChestBoxLocked" then
+                        displayText = "[上锁] 箱子"
+                    elseif v.Name == "Toolshed_Small" then
+                        displayText = "剪刀柜子"
+                    end
+                    AddESP(v, displayText, ChestColor)
+                end
+            end
+        end
+    end
+else
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        for _, v in ipairs(room:GetDescendants()) do
+            if v.Name == "Toolshed_Small" or v.Name == "Chest_Vine" or v.Name == "ChestBoxLocked" or v.Name == "ChestBox" then
+                ESPLibrary:RemoveESP(v)
+            end
+        end
+    end
+end
+end
+}):AddColorPicker('ChestColo', {
+	Default = ChestColor,
+	Title = '箱子颜色',
+	Transparency = 0,
+
+	Callback = function(Value)
+		ChestColor = Value
+        if Toggles.Chest.Value then
+            Toggles.Chest:SetValue(false)
+            Toggles.Chest:SetValue(true)
+        end
 	end
 })
 
@@ -4796,6 +4837,45 @@ Toggles.Gold:SetValue(false)
 Toggles.Gold:SetValue(true)
 
 end
+	end
+})
+
+ESP:AddToggle('Stardust',{
+     Text = "星尘",
+     Default = false,
+Callback = function(Value)
+if Value then
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        local roomNumber = tonumber(room.Name)
+        if roomNumber and shouldShowESP(roomNumber) then
+            for _, v in ipairs(room:GetDescendants()) do
+                if v.Name == "StardustPickup" then
+                    AddESP(v, "星尘", StardustColor)
+                end
+            end
+        end
+    end
+else
+    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        for _, v in ipairs(room:GetDescendants()) do
+            if v.Name == "StardustPickup" then
+                ESPLibrary:RemoveESP(v)
+            end
+        end
+    end
+end
+end
+}):AddColorPicker('StardustColo', {
+	Default = StardustColor,
+	Title = '星尘颜色',
+	Transparency = 0,
+
+	Callback = function(Value)
+		StardustColor = Value
+        if Toggles.Stardust.Value then
+            Toggles.Stardust:SetValue(false)
+            Toggles.Stardust:SetValue(true)
+        end
 	end
 })
 
@@ -5591,6 +5671,9 @@ if Toggles.AutoInteract.Value then
                             return
                         end
                         if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList.Value["金币"] then return end
+                        if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Candy" and Options.IgnoreList.Value["糖果"] then
+                return
+            end
                         if prompt.Parent:GetAttribute("JeffShop") and Options.IgnoreList.Value["Jeff物品"] then return end
                         if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList.Value["丢弃物品"] then return end
                         if prompt.Parent and prompt.Parent.Name == "Candy" and prompt.Parent:GetAttribute("Tool_CandyID") == "CandyRed" and Options.IgnoreList.Value["死亡糖果"] then
@@ -5599,6 +5682,9 @@ if Toggles.AutoInteract.Value then
                         if isTrickOrTreat and Options.IgnoreList.Value["捣蛋敲门"] then
                             return
                         end
+                        if prompt.Parent and prompt.Parent.Parent and prompt.Parent.Parent.Name == "WGrampyShop" and Options.IgnoreList.Value["Grampy物品"] then
+                return
+            end
                         if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then return end
                         if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then return end
                         if prompt.Parent and prompt.Parent.Name == "Padlock" then return end
@@ -5674,6 +5760,14 @@ table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Co
             end
         end
     end
+    if Toggles.Stardust and Toggles.Stardust.Value then
+    Toggles.Stardust:SetValue(false)
+    Toggles.Stardust:SetValue(true)
+    end
+    if Toggles.Chest and Toggles.Chest.Value then
+    Toggles.Chest:SetValue(false)
+    Toggles.Chest:SetValue(true)
+    end
     if Toggles.Key and Toggles.Key.Value then
         Toggles.Key:SetValue(false)
         Toggles.Key:SetValue(true)
@@ -5704,8 +5798,6 @@ table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Co
     end
 
 if Toggles.AntiSnare.Value then
-if Floor.Value == "Garden" then
-
 for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
 if room:FindFirstChild("Snares") then
 for _, v in ipairs(room.Snares:GetChildren()) do
@@ -5714,17 +5806,11 @@ v:WaitForChild("Hitbox",9e9).CanTouch = false
 end
 end
 end
-end
-
-else
-
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+        
 if room:FindFirstChild("Assets") then
 for _, v in ipairs(room.Assets:GetChildren()) do
- 
 if v.Name == "Snare" then
 v:WaitForChild("Hitbox",9e9).CanTouch = false
-end
 end
 end
 end
@@ -5828,7 +5914,7 @@ if Toggles.Ladder and Toggles.Ladder.Value then
 local v = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:FindFirstChild("Ladder",true)
 
 if v then
-AddESP(v,"梯子",Color3.new(0,3,2))
+AddESP(v,"梯子",Color3.new(0,0,1))
 end
 
 
