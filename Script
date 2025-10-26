@@ -647,7 +647,10 @@ ModifiersBox = Tabs.Floor:AddLeftGroupbox('修饰符')
 
 FloorESP = Tabs.Floor:AddRightGroupbox('ESP')
 
-local NotifyBox = Tabs.Visuals:AddRightGroupbox('通知')
+local TabBox4 = Tabs.Visuals:AddRightTabbox()
+
+local NotifyBox = TabBox4:AddTab('通知')
+local NySet = TabBox4:AddTab('设置')
 
 ESP = Tabs.Visuals:AddRightGroupbox('ESP')
 SettingsESP = Tabs.Visuals:AddLeftGroupbox('设置')
@@ -1309,8 +1312,6 @@ ReachBox:AddSlider("DoorReachRange", {
 })
 
 
-
-
 MiscBox:AddToggle('NoCutscenes',{
      Text = "无过场动画",
      Default = false
@@ -1356,14 +1357,82 @@ Text = "矿车透明",
 Default = false
 })
 
+ClosetTran:AddDivider()
+
+ClosetTran:AddToggle('NoVignette', {
+    Text = "柜子无暗角",
+    Default = false
+})
+
+local noVignetteLoop = nil
+
+Toggles.NoVignette:OnChanged(function(Value)
+if Value then
+
+noVignetteLoop = RunService.Heartbeat:Connect(function()
+if not Toggles.NoVignette.Value then return end
+
+local playerGui = LocalPlayer.PlayerGui
+if playerGui and playerGui:FindFirstChild("MainUI") then
+local mainUI = playerGui.MainUI
+if mainUI and mainUI:FindFirstChild("MainFrame") then
+local mainFrame = mainUI.MainFrame
+if mainFrame and mainFrame:FindFirstChild("HideVignette") then
+mainFrame.HideVignette.Visible = false
+end
+end
+end
+end)
+else
+if noVignetteLoop then
+noVignetteLoop:Disconnect()
+noVignetteLoop = nil
+end
+end
+end)
+
+ClosetTran:AddToggle('NoOxygenVignette', {
+    Text = "缺氧无暗边",
+    Default = false
+})
+
+local noOxygenVignetteLoop = nil
+Toggles.NoOxygenVignette:OnChanged(function(Value)
+if Value then
+noOxygenVignetteLoop = RunService.Heartbeat:Connect(function()
+if not Toggles.NoOxygenVignette.Value then return end
+local playerGui = LocalPlayer.PlayerGui
+if playerGui and playerGui:FindFirstChild("MainUI") then
+local mainUI = playerGui.MainUI
+if mainUI and mainUI:FindFirstChild("MainFrame") then
+local mainFrame = mainUI.MainFrame
+if mainFrame and mainFrame:FindFirstChild("EyelidsVignette") then
+mainFrame.EyelidsVignette.Visible = false
+end
+end
+end
+local oxygenBlur = Lighting:FindFirstChild("OxygenBlur")
+if oxygenBlur then
+oxygenBlur:Destroy()
+end
+local oxygenCC = Lighting:FindFirstChild("OxygenCC")
+if oxygenCC then
+oxygenCC:Destroy()
+end
+end)
+else
+if noOxygenVignetteLoop then
+noOxygenVignetteLoop:Disconnect()
+noOxygenVignetteLoop = nil
+end
+end
+end)
+
 Camera:AddToggle('Fullbright',{
      Text = "全亮",
      Default = false,
 Callback = function(Value)
 if Value then
-
-
-
 
 else
 game.Lighting.Ambient = Color3.fromRGB(0, 0, 0)
@@ -1481,119 +1550,126 @@ NotifyBox:AddToggle('EntityNotifys',{
      Default = false
 })
 
-
-NotifyBox:AddToggle('NotifyChat',{
+NySet:AddToggle('NotifyChat',{
      Text = "聊天通知实体",
      Default = false,
-     Callback = function(Value)
-        if Value then
-            if not notifyChatRunning then
-                notifyChatRunning = true
-                
-                local TextChatService = game:GetService("TextChatService")
-                local Workspace = game:GetService("Workspace")
-                
-                local entityNameMap = {
-    Rush = "Rush",
-    Ambush = "Ambush", 
-    ["A-60"] = "A-60",
-    ["A-120"] = "A-120",
-    Bramble = "Bramble",
-    Grumble = "Grumble",
-    Eyes = "Eyes",
-    Lookman = "Lookman",
-    Blitz = "Blitz",
-    Figure = "Figure",
-    Monument = "Monument",
-    Groundskeeper = "Groundskeeper",
-    Seek = "Seek"
+Callback = function(Value)
+if Value then
+if not notifyChatRunning then
+notifyChatRunning = true
+
+local TextChatService = game:GetService("TextChatService")
+local Workspace = game:GetService("Workspace")
+
+local entityNameMap = {
+Rush = "Rush",
+Ambush = "Ambush", 
+["A-60"] = "A-60",
+["A-120"] = "A-120",
+Eyes = "Eyes",
+Lookman = "Lookman",
+Blitz = "Blitz",
+Monument = "Monument",
+Groundskeeper = "Groundskeeper",
+Seek = "Seek"
 }
-                
-                local entityModelMap = {
-    Rush = "RushMoving",
-    Ambush = "AmbushMoving",
-    ["A-60"] = "A60",
-    ["A-120"] = "A120",
-    Bramble = "LiveEntityBramble",
-    Grumble = "GrumbleRig",
-    Eyes = "Eyes",
-    Lookman = "BackdoorLookman",
-    Blitz = "BackdoorRush",
-    Figure = "FigureRig",
-    Monument = "MonumentEntity",
-    Groundskeeper = "Groundskeeper",
-    Seek = "SeekMovingNewClone"
+
+local entityModelMap = {
+Rush = "RushMoving",
+Ambush = "AmbushMoving",
+["A-60"] = "A60",
+["A-120"] = "A120",
+Eyes = "Eyes",
+Lookman = "BackdoorLookman",
+Blitz = "BackdoorRush",
+Monument = "MonumentEntity",
+Groundskeeper = "Groundskeeper",
+Seek = "SeekMovingNewClone"
 }
-                
-                local detectedInstances = {}
-                
-                for entityName, modelName in pairs(entityModelMap) do
-                    detectedInstances[modelName] = {}
-                end
-                
-                local function sendMessage(message)
-                    if TextChatService and TextChatService.TextChannels then
-                        local channel = TextChatService.TextChannels:FindFirstChild("RBXGeneral")
-                        if channel then
-                            channel:SendAsync(message)
-                        end
-                    end
-                end
-                
-                local function checkForEntities()
-                    if not notifyChatRunning then return end
-                    
-                    local children = Workspace:GetDescendants()
-                    
-                    for _, child in ipairs(children) do
-                        if child:IsA("Model") then
-                            for entityName, modelName in pairs(entityModelMap) do
-                                if Options.EntitiesPicker.Value[entityName] then
-                                    if child.Name == modelName then
-                                        if not detectedInstances[modelName][child] then
-                                            detectedInstances[modelName][child] = true
-                                            local displayName = entityNameMap[entityName] or entityName
-                                            sendMessage("实体生成 > " .. displayName .. " <")
-                                        end
-                                        break
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    
-                    for modelName, instances in pairs(detectedInstances) do
-                        for instance in pairs(instances) do
-                            if not instance:IsDescendantOf(Workspace) then
-                                detectedInstances[modelName][instance] = nil
-                            end
-                        end
-                    end
-                end
-                
-                notifyChatConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                    if not notifyChatRunning then
-                        return
-                    end
-                    checkForEntities()
-                end)
-            end
-        else
-            notifyChatRunning = false
-            if notifyChatConnection then
-                notifyChatConnection:Disconnect()
-                notifyChatConnection = nil
-            end
-        end
-    end
+
+local detectedInstances = {}
+
+for entityName, modelName in pairs(entityModelMap) do
+detectedInstances[modelName] = {}
+end
+
+local function sendMessage(message)
+if TextChatService and TextChatService.TextChannels then
+local channel = TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+if channel then
+channel:SendAsync(message)
+end
+end
+end
+
+local function checkForEntities()
+if not notifyChatRunning then return end
+
+local children = Workspace:GetDescendants()
+
+for _, child in ipairs(children) do
+if child:IsA("Model") then
+for entityName, modelName in pairs(entityModelMap) do
+if Options.EntitiesPicker.Value[entityName] then
+if child.Name == modelName then
+if not detectedInstances[modelName][child] then
+detectedInstances[modelName][child] = true
+local displayName = entityNameMap[entityName] or entityName
+
+local messageFormat = Options.ChatMessageFormat.Value or "% 已生成"
+local chatMessage = messageFormat:gsub("%%", displayName)
+
+sendMessage(chatMessage)
+end
+break
+end
+end
+end
+end
+end
+
+for modelName, instances in pairs(detectedInstances) do
+for instance in pairs(instances) do
+if not instance:IsDescendantOf(Workspace) then
+detectedInstances[modelName][instance] = nil
+end
+end
+end
+end
+
+notifyChatConnection = game:GetService("RunService").Heartbeat:Connect(function()
+if not notifyChatRunning then
+return
+end
+checkForEntities()
+end)
+end
+else
+notifyChatRunning = false
+if notifyChatConnection then
+notifyChatConnection:Disconnect()
+notifyChatConnection = nil
+end
+end
+end
+})
+
+NySet:AddInput("ChatMessageFormat", {
+    Default = "% 已生成",
+    Numeric = false,
+    Finished = false,
+    Text = "聊天消息格式",
+    Tooltip = "% 将被替换为实体名称",
+    Callback = function(Value)
+    end,
 })
 
 local notifyChatRunning = false
 local notifyChatConnection = nil
 
 if notifyChatConnection then
-    notifyChatConnection:Disconnect()
-    notifyChatConnection = nil
+notifyChatConnection:Disconnect()
+notifyChatConnection = nil
 end
 notifyChatRunning = false
 
@@ -1913,34 +1989,34 @@ SettingsESP:AddSlider("TextSizeSlider", {
 
 SettingsESP:AddSlider("ESPFillTransparency", {
     Text = "填充透明度",
-    Default = 0.5,
+    Default = 0.7,
     Min = 0,
-    Max = 1,
+    Max = 1.0,
     Rounding = 2,
     Compact = true,
-    Callback = function(Value)
-        for _, espObject in pairs(ESPObjects) do
-            if espObject and espObject.CurrentSettings then
-                espObject.CurrentSettings.FillTransparency = Value
-            end
-        end
-    end
+Callback = function(Value)
+for _, espObject in pairs(ESPObjects) do
+if espObject and espObject.CurrentSettings then
+espObject.CurrentSettings.FillTransparency = Value
+end
+end
+end
 })
 
 SettingsESP:AddSlider("ESPOutlineTransparency", {
     Text = "轮廓透明度",
-    Default = 0,
+    Default = 0.4,
     Min = 0,
-    Max = 1,
+    Max = 1.0,
     Rounding = 2,
     Compact = true,
-    Callback = function(Value)
-        for _, espObject in pairs(ESPObjects) do
-            if espObject and espObject.CurrentSettings then
-                espObject.CurrentSettings.OutlineTransparency = Value
-            end
-        end
-    end
+Callback = function(Value)
+for _, espObject in pairs(ESPObjects) do
+if espObject and espObject.CurrentSettings then
+espObject.CurrentSettings.OutlineTransparency = Value
+end
+end
+end
 })
 
 Ignore = {
@@ -1976,7 +2052,7 @@ Automation:AddToggle('AutoInteract',{
      Text = "自动互动",
      Default = false,
 
- Callback = function(Value)
+Callback = function(Value)
 if Value then
 
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
@@ -1997,24 +2073,24 @@ end
 }):AddKeyPicker('AutoInteractKeybind', {
 
 
-		Default = 'R',
-		SyncToggleState = true,
-		Mode = 'Toggle',
-		Text = '自动互动',
-		NoUI = false,
-		Callback = function(Value)
-		end,
-		ChangedCallback = function(New)
-		end
-	})
+Default = 'R',
+SyncToggleState = true,
+Mode = 'Toggle',
+Text = '自动互动',
+NoUI = false,
+Callback = function(Value)
+end,
+ChangedCallback = function(New)
+end
+})
 
 Automation:AddDropdown("IgnoreList", {
-    Values = {"Jeff物品","金币","糖果","丢弃物品","故障方块","死亡糖果","捣蛋敲门","Grampy物品"},
+Values = {"Jeff物品","金币","糖果","丢弃物品","故障方块","死亡糖果","捣蛋敲门","Grampy物品"},
     Default = 1,
     Multi = true,
     Text = "忽略列表",
-    Callback = function(Value)
-    end,
+Callback = function(Value)
+end,
 })
 
 Automation:AddDivider()
@@ -2022,9 +2098,7 @@ Automation:AddDivider()
 Automation:AddToggle('AutoHeartbeatMiniGame',{
 
      Text = "自动心跳小游戏",
-
      Disabled = Disable5,
-
      Default = false
 
 })
@@ -2045,7 +2119,7 @@ local PlayerGui = LocalPlayer.PlayerGui
 
 local function findPL()
 	
-	return RemoteFolder:FindFirstChild("PL")
+return RemoteFolder:FindFirstChild("PL")
 end
 
 local PL = findPL()
@@ -3641,137 +3715,137 @@ if Floor.Value == "Mines" then
 end
 
 if Floor.Value == "Mines" then
-    local minecartRenameActive = false
-    local minecartToggleEnabled = false
-    local minecartRoomCheckConnection = nil
+local minecartRenameActive = false
+local minecartToggleEnabled = false
+local minecartRoomCheckConnection = nil
+
+FloorAnti:AddToggle('DeleteMinecart', {
+Text = "删除矿车",
+Default = false,
+Callback = function(Value)
+minecartToggleEnabled = Value
+
+if Value then
+local room46 = workspace.CurrentRooms:FindFirstChild("46")
+if room46 then
+performMinecartRename()
+else
+minecartRoomCheckConnection = workspace.CurrentRooms.ChildAdded:Connect(function(child)
+if child.Name == "46" and minecartToggleEnabled then
+task.wait(1)
+performMinecartRename()
+if minecartRoomCheckConnection then
+minecartRoomCheckConnection:Disconnect()
+minecartRoomCheckConnection = nil
+end
+end
+end)
+end
+else
+if minecartRoomCheckConnection then
+minecartRoomCheckConnection:Disconnect()
+minecartRoomCheckConnection = nil
+end
+
+if not minecartRenameActive then
+else
+Toggles.DeleteMinecart:SetValue(true)
+end
+end
+end
+})
+
+function performMinecartRename()
+if minecartRenameActive then
+return
+end
+
+minecartRenameActive = true
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemotesFolder = ReplicatedStorage:WaitForChild("RemotesFolder")
+
+local remoteNames = {"MinecartResult"}
+
+for _, name in ipairs(remoteNames) do
+local remote = RemotesFolder:FindFirstChild(name)
+if remote then
+remote.Name = name .. " "
+end
+end
+
+Library:Notify("删除矿车成功", 7)
+Library:Notify("触发矿车过场动画后可绕过反作弊", 7)
+
+Toggles.DeleteMinecart:SetValue(true)
+end
     
-    FloorAnti:AddToggle('DeleteMinecart', {
-        Text = "删除矿车",
-        Default = false,
-        Callback = function(Value)
-            minecartToggleEnabled = Value
-            
-            if Value then
-                local room46 = workspace.CurrentRooms:FindFirstChild("46")
-                if room46 then
-                    performMinecartRename()
-                else
-                    minecartRoomCheckConnection = workspace.CurrentRooms.ChildAdded:Connect(function(child)
-                        if child.Name == "46" and minecartToggleEnabled then
-                            task.wait(1)
-                            performMinecartRename()
-                            if minecartRoomCheckConnection then
-                                minecartRoomCheckConnection:Disconnect()
-                                minecartRoomCheckConnection = nil
-                            end
-                        end
-                    end)
-                end
-            else
-                if minecartRoomCheckConnection then
-                    minecartRoomCheckConnection:Disconnect()
-                    minecartRoomCheckConnection = nil
-                end
-                
-                if not minecartRenameActive then
-                else
-                    Toggles.DeleteMinecart:SetValue(true)
-                end
-            end
-        end
-    })
-    
-    function performMinecartRename()
-        if minecartRenameActive then
-            return
-        end
-        
-        minecartRenameActive = true
-        
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local RemotesFolder = ReplicatedStorage:WaitForChild("RemotesFolder")
-        
-        local remoteNames = {"MinecartResult"}
-        
-        for _, name in ipairs(remoteNames) do
-            local remote = RemotesFolder:FindFirstChild(name)
-            if remote then
-                remote.Name = name .. " "
-            end
-        end
-        
-        Library:Notify("删除矿车成功", 7)
-        Library:Notify("触发矿车过场动画后可绕过反作弊", 7)
-        
-        Toggles.DeleteMinecart:SetValue(true)
-    end
-    
-    if Toggles.DeleteMinecart and Toggles.DeleteMinecart.Value then
-        local room46 = workspace.CurrentRooms:FindFirstChild("46")
-        if room46 then
-            performMinecartRename()
-        end
-    end
+if Toggles.DeleteMinecart and Toggles.DeleteMinecart.Value then
+local room46 = workspace.CurrentRooms:FindFirstChild("46")
+if room46 then
+performMinecartRename()
+end
+end
 end
 
 if Floor.Value == "Mines" then
     FloorAnti:AddToggle('MinecartNoCollision', {
         Text = "矿车无碰撞",
         Default = false,
-        Callback = function(Value)
-            if Value then
-                for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-                    local assets = room:FindFirstChild("Assets")
-                    if assets then
-                        local minecartSet = assets:FindFirstChild("MinecartSet")
-                        if minecartSet then
-                            for _, child in ipairs(minecartSet:GetChildren()) do
-                                local cart = child:FindFirstChild("Cart")
-                                if cart and cart:IsA("BasePart") then
-                                    cart.CanCollide = false
-                                end
-                            end
-                        end
-                    end
-                end
+Callback = function(Value)
+if Value then
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local assets = room:FindFirstChild("Assets")
+if assets then
+local minecartSet = assets:FindFirstChild("MinecartSet")
+if minecartSet then
+for _, child in ipairs(minecartSet:GetChildren()) do
+local cart = child:FindFirstChild("Cart")
+if cart and cart:IsA("BasePart") then
+cart.CanCollide = false
+end
+end
+end
+end
+end
                 
-                if not minecartConnection then
-                    minecartConnection = workspace.DescendantAdded:Connect(function(descendant)
-                        if Toggles.MinecartNoCollision and Toggles.MinecartNoCollision.Value then
-                            if descendant.Name == "Cart" and descendant:IsA("BasePart") then
-                                local parent = descendant.Parent
-                                if parent and parent.Parent and parent.Parent.Name == "MinecartSet" then
-                                    descendant.CanCollide = false
-                                end
-                            end
-                        end
-                    end)
-                end
-            else
-                for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-                    local assets = room:FindFirstChild("Assets")
-                    if assets then
-                        local minecartSet = assets:FindFirstChild("MinecartSet")
-                        if minecartSet then
-                            for _, child in ipairs(minecartSet:GetChildren()) do
-                                local cart = child:FindFirstChild("Cart")
-                                if cart and cart:IsA("BasePart") then
-                                    cart.CanCollide = true
-                                end
-                            end
-                        end
-                    end
-                end
-                
-                if minecartConnection then
-                    minecartConnection:Disconnect()
-                    minecartConnection = nil
-                end
-            end
-        end
-    })
+if not minecartConnection then
+minecartConnection = workspace.DescendantAdded:Connect(function(descendant)
+if Toggles.MinecartNoCollision and Toggles.MinecartNoCollision.Value then
+if descendant.Name == "Cart" and descendant:IsA("BasePart") then
+local parent = descendant.Parent
+if parent and parent.Parent and parent.Parent.Name == "MinecartSet" then
+descendant.CanCollide = false
+end
+end
+end
+end)
+end
+else
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local assets = room:FindFirstChild("Assets")
+if assets then
+local minecartSet = assets:FindFirstChild("MinecartSet")
+if minecartSet then
+for _, child in ipairs(minecartSet:GetChildren()) do
+local cart = child:FindFirstChild("Cart")
+if cart and cart:IsA("BasePart") then
+cart.CanCollide = true
+end
+end
+end
+end
+end
+
+if minecartConnection then
+minecartConnection:Disconnect()
+minecartConnection = nil
+end
+end
+end
+})
     
-    local minecartConnection = nil
+local minecartConnection = nil
 end
 
 local RankedAntiBananaConnection = nil
@@ -3795,31 +3869,31 @@ ModifiersBox:AddToggle('AntiLookman',{
 local skyRemovalConnection = nil
 
 ModifiersBox:AddToggle('AntiFog',{
-     Text = "没有雾",
-     Default = false,
-     Callback = function(Value)
-        if Value then
-            if Lighting:FindFirstChildOfClass("Sky") then
-                Lighting:FindFirstChildOfClass("Sky"):Destroy()
-            end
-            
-            skyRemovalConnection = RunService.Heartbeat:Connect(function()
-                if not Toggles.AntiFog.Value then
-                    return
-                end
-                
-                local currentSky = Lighting:FindFirstChildOfClass("Sky")
-                if currentSky then
-                    currentSky:Destroy()
-                end
-            end)
-        else
-            if skyRemovalConnection then
-                skyRemovalConnection:Disconnect()
-                skyRemovalConnection = nil
-            end
-        end
-     end
+Text = "没有雾",
+Default = false,
+Callback = function(Value)
+if Value then
+if Lighting:FindFirstChildOfClass("Sky") then
+Lighting:FindFirstChildOfClass("Sky"):Destroy()
+end
+
+skyRemovalConnection = RunService.Heartbeat:Connect(function()
+if not Toggles.AntiFog.Value then
+return
+end
+
+local currentSky = Lighting:FindFirstChildOfClass("Sky")
+if currentSky then
+currentSky:Destroy()
+end
+end)
+else
+if skyRemovalConnection then
+skyRemovalConnection:Disconnect()
+skyRemovalConnection = nil
+end
+end
+end
 })
 
 if Floor.Value == "Party" then
@@ -3956,119 +4030,119 @@ local batDecorConnection = nil
 
 
 local function isPlayerOwnedItem(instance)
-    local current = instance
-    while current and current ~= workspace do
-        if current:IsA("Model") then
-            local player = Players:GetPlayerFromCharacter(current)
-            if player and player == LocalPlayer then
-                return true
-            end
-            if current:IsA("Tool") then
-                local owner = current:FindFirstChild("Owner")
-                if owner and owner.Value then
-                    return true
-                end
-                local parent = current.Parent
-                if parent and (parent:IsA("Backpack") or (parent:IsA("Model") and Players:GetPlayerFromCharacter(parent))) then
-                    return true
-                end
-            end
-        end
-        current = current.Parent
-    end
-    return false
+local current = instance
+while current and current ~= workspace do
+if current:IsA("Model") then
+local player = Players:GetPlayerFromCharacter(current)
+if player and player == LocalPlayer then
+return true
+end
+if current:IsA("Tool") then
+local owner = current:FindFirstChild("Owner")
+if owner and owner.Value then
+return true
+end
+local parent = current.Parent
+if parent and (parent:IsA("Backpack") or (parent:IsA("Model") and Players:GetPlayerFromCharacter(parent))) then
+return true
+end
+end
+end
+current = current.Parent
+end
+return false
 end
 
 function AddESP(inst, txt, color)
-    if isPlayerOwnedItem(inst) then
-        return
-    end
+if isPlayerOwnedItem(inst) then
+return
+end
     
-    if not inst or not inst.Parent then return end
+if not inst or not inst.Parent then return end
     
-    local model = inst
-    if inst:IsA("BasePart") and inst.Parent and inst.Parent:IsA("Model") then
-        model = inst.Parent
-    end
+local model = inst
+if inst:IsA("BasePart") and inst.Parent and inst.Parent:IsA("Model") then
+model = inst.Parent
+end
     
-    if inst.Name == "Door" and inst.Parent and inst.Parent.Name == "Door" then
-        model = inst
-    end
+if inst.Name == "Door" and inst.Parent and inst.Parent.Name == "Door" then
+model = inst
+end
     
-    if isPlayerOwnedItem(model) then
-        return
-    end
+if isPlayerOwnedItem(model) then
+return
+end
     
-    if ESPObjects[model] then
-        ESPObjects[model]:Hide()
-    end
+if ESPObjects[model] then
+ESPObjects[model]:Hide()
+end
     
-    local espObject = ESPLibrary:Add({
-        Name = txt,
-        Model = model,
-        Color = color,
-        MaxDistance = 1000,
-        TextSize = ESPConfig.TextSize,
-        ESPType = "Highlight",
-        FillColor = color,
-        OutlineColor = color,
-        FillTransparency = ESPConfig.FillTransparency,
-        OutlineTransparency = ESPConfig.OutlineTransparency,
-        Tracer = { 
-            Enabled = ESPConfig.Tracer.Enabled,
-            Color = color,
-            From = ESPConfig.Tracer.Position
-        }
-    })
+local espObject = ESPLibrary:Add({
+Name = txt,
+Model = model,
+Color = color,
+MaxDistance = 1000,
+TextSize = ESPConfig.TextSize,
+ESPType = "Highlight",
+FillColor = color,
+OutlineColor = color,
+FillTransparency = ESPConfig.FillTransparency,
+OutlineTransparency = ESPConfig.OutlineTransparency,
+Tracer = { 
+Enabled = ESPConfig.Tracer.Enabled,
+Color = color,
+From = ESPConfig.Tracer.Position
+}
+})
     
-    ESPObjects[model] = espObject
-    espObject:Show()
+ESPObjects[model] = espObject
+espObject:Show()
 end
 
 function ESPLibrary:AddESP(Part, Txt, Color)
-    if isPlayerOwnedItem(Part) then
-        return
-    end
+if isPlayerOwnedItem(Part) then
+return
+end
     
-    if not Part or not Part.Parent then return end
+if not Part or not Part.Parent then return end
     
-    local model = Part
-    if Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
-        model = Part.Parent
-    end
+local model = Part
+if Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
+model = Part.Parent
+end
     
-    if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
-        model = Part
-    end
+if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
+model = Part
+end
     
-    if isPlayerOwnedItem(model) then
-        return
-    end
+if isPlayerOwnedItem(model) then
+return
+end
     
-    if ESPObjects[model] then
-        ESPObjects[model]:Hide()
-    end
+if ESPObjects[model] then
+ESPObjects[model]:Hide()
+end
     
-    local espObject = ESPLibrary:Add({
-        Name = Txt,
-        Model = model,
-        Color = Color,
-        MaxDistance = 1000,
-        TextSize = ESPConfig.TextSize,
-        ESPType = "Highlight",
-        FillColor = Color,
-        OutlineColor = Color,
-        FillTransparency = ESPConfig.FillTransparency,
-        OutlineTransparency = ESPConfig.OutlineTransparency,
-        Tracer = { 
-            Enabled = ESPConfig.Tracer.Enabled,
-            Color = Color,
-            From = ESPConfig.Tracer.Position
-        }
-    })
+local espObject = ESPLibrary:Add({
+Name = Txt,
+Model = model,
+Color = Color,
+MaxDistance = 1000,
+TextSize = ESPConfig.TextSize,
+ESPType = "Highlight",
+FillColor = Color,
+OutlineColor = Color,
+FillTransparency = ESPConfig.FillTransparency,
+OutlineTransparency = ESPConfig.OutlineTransparency,
+Tracer = { 
+Enabled = ESPConfig.Tracer.Enabled,
+Color = Color,
+From = ESPConfig.Tracer.Position
+}
+})
     
-    ESPObjects[model] = espObject
-    espObject:Show()
+ESPObjects[model] = espObject
+espObject:Show()
 end
 
 
@@ -4088,50 +4162,50 @@ local ChestColor = Color3.new(1, 0.8, 0)
 local GoldColor = Color3.new(1, 0.8, 0)
 local StardustColor = Color3.fromRGB(230, 116, 126)
 local FuseColor = Color3.new(0,1,0)
-local AnchorColor =  Color3.new(0,0,1)
+local AnchorColor =  Color3.new(0,1,0)
 
 ESP:AddToggle('Door',{
      Text = "门",
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
-                local Door = room.Door.Door
-                if not Door:GetAttribute("Used") then
-                    local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
-                    local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
-                    
-                    if roomNumber == currentRoom then
-                        if Door.Parent:FindFirstChild("Lock") then
-                            displayText = "[上锁] " .. displayText
-                        end
-                    elseif roomNumber == currentRoom + 1 then
-                        local keyFound = false
-                        for _, obj in ipairs(room:GetDescendants()) do
-                            if obj.Name == "KeyObtain" and not obj:GetAttribute("Used") then
-                                keyFound = true
-                                break
-                            end
-                        end
-                        if keyFound then
-                            displayText = "[上锁] " .. displayText
-                        end
-                    end
-                    
-                    AddESP(Door, displayText, DoorColor)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+local Door = room.Door.Door
+if not Door:GetAttribute("Used") then
+local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
+local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+
+if roomNumber == currentRoom then
+if Door.Parent:FindFirstChild("Lock") then
+displayText = "[上锁] " .. displayText
+end
+elseif roomNumber == currentRoom + 1 then
+local keyFound = false
+for _, obj in ipairs(room:GetDescendants()) do
+if obj.Name == "KeyObtain" and not obj:GetAttribute("Used") then
+keyFound = true
+break
+end
+end
+if keyFound then
+displayText = "[上锁] " .. displayText
+end
+end
+
+AddESP(Door, displayText, DoorColor)
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
-            ESPLibrary:RemoveESP(room.Door.Door)
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+ESPLibrary:RemoveESP(room.Door.Door)
+end
+end
 end
 end
 }):AddColorPicker('DoorColo', {
@@ -4139,15 +4213,15 @@ end
 	Title = 'Door Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		DoorColor = Value
+Callback = function(Value)
+DoorColor = Value
 if Toggles.Door.Value then
 
 Toggles.Door:SetValue(false)
 Toggles.Door:SetValue(true)
 
 end
-	end
+end
 })
 
 FloorESP:AddToggle('TimerLever',{
@@ -4155,22 +4229,22 @@ FloorESP:AddToggle('TimerLever',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            local v = room:FindFirstChild("TimerLever",true)
-            if v and v.Name == "TimerLever" then
-                AddESP(v,"倒计时拉杆",TimerLeverColor)
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+local v = room:FindFirstChild("TimerLever",true)
+if v and v.Name == "TimerLever" then
+AddESP(v,"倒计时拉杆",TimerLeverColor)
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local v = room:FindFirstChild("TimerLever",true)
-        if v and v.Name == "TimerLever" then
-            ESPLibrary:RemoveESP(v)
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local v = room:FindFirstChild("TimerLever",true)
+if v and v.Name == "TimerLever" then
+ESPLibrary:RemoveESP(v)
+end
+end
 end
 end
 }):AddColorPicker('TimeLeverColo', {
@@ -4178,15 +4252,15 @@ end
 	Title = 'Timer Lever Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		TimerLeverColor = Value
+Callback = function(Value)
+TimerLeverColor = Value
 if Toggles.TimerLever.Value then
 
 Toggles.TimerLever:SetValue(false)
 Toggles.TimerLever:SetValue(true)
 
 end
-	end
+end
 })
 
 
@@ -4240,15 +4314,15 @@ end
 	Title = 'Lever Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		LeverColor = Value
+Callback = function(Value)
+LeverColor = Value
 if Toggles.Lever.Value then
 
 Toggles.Lever:SetValue(false)
 Toggles.Lever:SetValue(true)
 
 end
-	end
+end
 })
 
 end
@@ -4280,15 +4354,15 @@ end
 	Title = 'Generator Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		GeneratorColor = Value
+Callback = function(Value)
+GeneratorColor = Value
 if Toggles.Generator.Value then
 
 Toggles.Generator:SetValue(false)
 Toggles.Generator:SetValue(true)
 
 end
-	end
+end
 })
 
 FloorESP:AddToggle('Ladder',{
@@ -4337,15 +4411,15 @@ end
 	Title = 'Fuse Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		FuseColor = Value
+Callback = function(Value)
+FuseColor = Value
 if Toggles.Fuse.Value then
 
 Toggles.Fuse:SetValue(false)
 Toggles.Fuse:SetValue(true)
 
 end
-	end
+end
 })
 
 end
@@ -4374,8 +4448,8 @@ end
 	Title = 'Anchor Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		AnchorColor = Value
+Callback = function(Value)
+AnchorColor = Value
 if Toggles.Anchor.Value then
 
 Toggles.Anchor:SetValue(false)
@@ -4405,22 +4479,22 @@ ESP:AddToggle('Key',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            local v = room:FindFirstChild("KeyObtain",true)
-            if v and not v:GetAttribute("Used") then
-                AddESP(v,"钥匙",KeyColor)
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+local v = room:FindFirstChild("KeyObtain",true)
+if v and not v:GetAttribute("Used") then
+AddESP(v,"钥匙",KeyColor)
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local Key = room:FindFirstChild("KeyObtain",true)
-        if Key then
-            ESPLibrary:RemoveESP(Key)
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local Key = room:FindFirstChild("KeyObtain",true)
+if Key then
+ESPLibrary:RemoveESP(Key)
+end
+end
 end
 end
 }):AddColorPicker('KeyColo', {
@@ -4428,15 +4502,15 @@ end
 	Title = 'Key Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		KeyColor = Value
+Callback = function(Value)
+KeyColor = Value
 if Toggles.Key.Value then
 
 Toggles.Key:SetValue(false)
 Toggles.Key:SetValue(true)
 
 end
-	end
+end
 })
 local HidingSpots = {
 Wardrobe = "柜子",
@@ -4457,32 +4531,32 @@ ESP:AddToggle('HidingSpot',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            local assets = room:FindFirstChild("Assets")
-            if assets then
-                for _, v in ipairs(assets:GetChildren()) do
-                    local TextName = HidingSpots[v.Name]
-                    if TextName and v.PrimaryPart then
-                        AddESP(v,TextName,HidingSpotColor)
-                    end
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+local assets = room:FindFirstChild("Assets")
+if assets then
+for _, v in ipairs(assets:GetChildren()) do
+local TextName = HidingSpots[v.Name]
+if TextName and v.PrimaryPart then
+AddESP(v,TextName,HidingSpotColor)
+end
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local assets = room:FindFirstChild("Assets")
-        if assets then
-            for _, v in ipairs(assets:GetChildren()) do
-                local TextName = HidingSpots[v.Name]
-                if TextName and v.PrimaryPart then
-                    ESPLibrary:RemoveESP(v)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local assets = room:FindFirstChild("Assets")
+if assets then
+for _, v in ipairs(assets:GetChildren()) do
+local TextName = HidingSpots[v.Name]
+if TextName and v.PrimaryPart then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
+end
 end
 end
 }):AddColorPicker('HidingSpot', {
@@ -4490,15 +4564,15 @@ end
 	Title = 'Hiding Place Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		HidingSpotColor = Value
+Callback = function(Value)
+HidingSpotColor = Value
 if Toggles.HidingSpot.Value then
 
 Toggles.HidingSpot:SetValue(false)
 Toggles.HidingSpot:SetValue(true)
 
 end
-	end
+end
 })
 
 ESP:AddToggle('GateLever',{
@@ -4506,23 +4580,23 @@ ESP:AddToggle('GateLever',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            for _, v in ipairs(room:GetDescendants()) do
-                if v.Name == "LeverForGate" then
-                    AddESP(v,"门拉杆",GateLeverColor)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "LeverForGate" then
+AddESP(v,"门拉杆",GateLeverColor)
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local Lever = room:FindFirstChild("LeverForGate",true)
-        if Lever then 
-            ESPLibrary:RemoveESP(Lever)
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local Lever = room:FindFirstChild("LeverForGate",true)
+if Lever then 
+ESPLibrary:RemoveESP(Lever)
+end
+end
 end
 end
 }):AddColorPicker('GateLeverColo', {
@@ -4530,15 +4604,15 @@ end
 	Title = 'Gate Lever Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		GateLeverColor = Value
+Callback = function(Value)
+GateLeverColor = Value
 if Toggles.GateLever.Value then
 
 Toggles.GateLever:SetValue(false)
 Toggles.GateLever:SetValue(true)
 
 end
-	end
+end
 })
 ESP:AddToggle('Players',{
      Text = "玩家",
@@ -4549,8 +4623,8 @@ for _, plr in ipairs(Players:GetPlayers()) do
 if plr ~= LocalPlayer and plr.Character then
 AddESP(plr.Character,plr.Name,PlayersColor)
 
-                   end
-            end
+end
+end
 else
 for _, plr in ipairs(Players:GetPlayers()) do
 if plr ~= LocalPlayer and plr.Character then
@@ -4558,22 +4632,22 @@ ESPLibrary:RemoveESP(plr.Character)
 end
 end
 
-      end
+end
 end
 }):AddColorPicker('PlayersColo', {
 	Default = PlayersColor,
 	Title = 'Players Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		PlayersColor = Value
+Callback = function(Value)
+PlayersColor = Value
 if Toggles.Players.Value then
 
 Toggles.Players:SetValue(false)
 Toggles.Players:SetValue(true)
 
 end
-	end
+end
 })
 
 local PlayersConnection
@@ -4594,24 +4668,24 @@ ESP:AddToggle('Books',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            for _, v in ipairs(room:GetDescendants()) do
-                if v.Name == "LiveHintBook" then
-                    AddESP(v,"书",BooksColor)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "LiveHintBook" then
+AddESP(v,"书",BooksColor)
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        for _, v in ipairs(room:GetDescendants()) do
-            if v.Name == "LiveHintBook" then
-                ESPLibrary:RemoveESP(v)
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "LiveHintBook" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
 end
 end
 }):AddColorPicker('BooksColo', {
@@ -4619,15 +4693,15 @@ end
 	Title = 'Books Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		BooksColor = Value
+Callback = function(Value)
+BooksColor = Value
 if Toggles.Books.Value then
 
 Toggles.Books:SetValue(false)
 Toggles.Books:SetValue(true)
 
 end
-	end
+end
 })
 
 ESP:AddToggle('Breaker',{
@@ -4635,24 +4709,24 @@ ESP:AddToggle('Breaker',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            for _, v in ipairs(room:GetDescendants()) do
-                if v.Name == "LiveBreakerPolePickup" then
-                    AddESP(v,"断路器",BreakerColor)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "LiveBreakerPolePickup" then
+AddESP(v,"断路器",BreakerColor)
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        for _, v in ipairs(room:GetDescendants()) do
-            if v.Name == "LiveBreakerPolePickup" then
-                ESPLibrary:RemoveESP(v)
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "LiveBreakerPolePickup" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
 end
 end
 }):AddColorPicker('BreakerColo', {
@@ -4660,15 +4734,15 @@ end
 	Title = 'Breaker Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		BreakerColor = Value
+Callback = function(Value)
+BreakerColor = Value
 if Toggles.Breaker.Value then
 
 Toggles.Breaker:SetValue(false)
 Toggles.Breaker:SetValue(true)
 
 end
-	end
+end
 })
 
  Item = {
@@ -4743,11 +4817,11 @@ end
 	Title = 'Items Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		ItemsColor = Value
+Callback = function(Value)
+ItemsColor = Value
 if Toggles.Items.Value then
-    Toggles.Items:SetValue(false)
-    Toggles.Items:SetValue(true)
+Toggles.Items:SetValue(false)
+Toggles.Items:SetValue(true)
 end
 end
 })
@@ -4757,32 +4831,32 @@ ESP:AddToggle('Chest',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            for _, v in ipairs(room:GetDescendants()) do
-                if v.Name == "Toolshed_Small" or v.Name == "Chest_Vine" or v.Name == "ChestBoxLocked" or v.Name == "ChestBox" then
-                    local displayText = "箱子"
-                    if v.Name == "Chest_Vine" then
-                        displayText = "[藤蔓] 箱子"
-                    elseif v.Name == "ChestBoxLocked" then
-                        displayText = "[上锁] 箱子"
-                    elseif v.Name == "Toolshed_Small" then
-                        displayText = "剪刀柜子"
-                    end
-                    AddESP(v, displayText, ChestColor)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "Toolshed_Small" or v.Name == "Chest_Vine" or v.Name == "ChestBoxLocked" or v.Name == "ChestBox" then
+local displayText = "箱子"
+if v.Name == "Chest_Vine" then
+displayText = "[藤蔓] 箱子"
+elseif v.Name == "ChestBoxLocked" then
+displayText = "[上锁] 箱子"
+elseif v.Name == "Toolshed_Small" then
+displayText = "剪刀柜子"
+end
+AddESP(v, displayText, ChestColor)
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        for _, v in ipairs(room:GetDescendants()) do
-            if v.Name == "Toolshed_Small" or v.Name == "Chest_Vine" or v.Name == "ChestBoxLocked" or v.Name == "ChestBox" then
-                ESPLibrary:RemoveESP(v)
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "Toolshed_Small" or v.Name == "Chest_Vine" or v.Name == "ChestBoxLocked" or v.Name == "ChestBox" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
 end
 end
 }):AddColorPicker('ChestColo', {
@@ -4790,13 +4864,13 @@ end
 	Title = '箱子颜色',
 	Transparency = 0,
 
-	Callback = function(Value)
-		ChestColor = Value
-        if Toggles.Chest.Value then
-            Toggles.Chest:SetValue(false)
-            Toggles.Chest:SetValue(true)
-        end
-	end
+Callback = function(Value)
+ChestColor = Value
+if Toggles.Chest.Value then
+Toggles.Chest:SetValue(false)
+Toggles.Chest:SetValue(true)
+end
+end
 })
 
 ESP:AddToggle('Gold',{
@@ -4804,24 +4878,24 @@ ESP:AddToggle('Gold',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            for _, v in ipairs(room:GetDescendants()) do
-                if v and v.Name == "GoldPile" then
-                    AddESP(v,"金币 " .. v:GetAttribute("GoldValue"),GoldColor)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+for _, v in ipairs(room:GetDescendants()) do
+if v and v.Name == "GoldPile" then
+AddESP(v,"金币 " .. v:GetAttribute("GoldValue"),GoldColor)
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        for _, v in ipairs(room:GetDescendants()) do
-            if v.Name == "GoldPile" then
-                ESPLibrary:RemoveESP(v)
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "GoldPile" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
 end
 end
 }):AddColorPicker('GoldColor', {
@@ -4829,15 +4903,15 @@ end
 	Title = 'Gold Color',
 	Transparency = 0,
 
-	Callback = function(Value)
-		GoldColor = Value
+Callback = function(Value)
+GoldColor = Value
 if Toggles.Gold.Value then
 
 Toggles.Gold:SetValue(false)
 Toggles.Gold:SetValue(true)
 
 end
-	end
+end
 })
 
 ESP:AddToggle('Stardust',{
@@ -4845,24 +4919,24 @@ ESP:AddToggle('Stardust',{
      Default = false,
 Callback = function(Value)
 if Value then
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        local roomNumber = tonumber(room.Name)
-        if roomNumber and shouldShowESP(roomNumber) then
-            for _, v in ipairs(room:GetDescendants()) do
-                if v.Name == "StardustPickup" then
-                    AddESP(v, "星尘", StardustColor)
-                end
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "StardustPickup" then
+AddESP(v, "星尘", StardustColor)
+end
+end
+end
+end
 else
-    for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-        for _, v in ipairs(room:GetDescendants()) do
-            if v.Name == "StardustPickup" then
-                ESPLibrary:RemoveESP(v)
-            end
-        end
-    end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "StardustPickup" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
 end
 end
 }):AddColorPicker('StardustColo', {
@@ -4870,13 +4944,13 @@ end
 	Title = '星尘颜色',
 	Transparency = 0,
 
-	Callback = function(Value)
-		StardustColor = Value
-        if Toggles.Stardust.Value then
-            Toggles.Stardust:SetValue(false)
-            Toggles.Stardust:SetValue(true)
-        end
-	end
+Callback = function(Value)
+StardustColor = Value
+if Toggles.Stardust.Value then
+Toggles.Stardust:SetValue(false)
+Toggles.Stardust:SetValue(true)
+end
+end
 })
 
 ESP:AddToggle('EntitesESP',{
@@ -4886,19 +4960,19 @@ ESP:AddToggle('EntitesESP',{
 	Default = EntityColor,
 	Title = '实体颜色',
 	Transparency = 0,
-	Callback = function(Value)
-		EntityColor = Value
-        if Toggles.EntitesESP.Value then
-            for _, entity in ipairs(workspace:GetChildren()) do
-                if entity:FindFirstChild("ESP_System") then
-                    entity.ESP_System.FillColor = EntityColor
-                    if entity:FindFirstChild("ESP_GUI") and entity.ESP_GUI:FindFirstChild("Txt") then
-                        entity.ESP_GUI.Txt.TextColor3 = EntityColor
-                    end
-                end
-            end
-        end
-	end
+Callback = function(Value)
+EntityColor = Value
+if Toggles.EntitesESP.Value then
+for _, entity in ipairs(workspace:GetChildren()) do
+if entity:FindFirstChild("ESP_System") then
+entity.ESP_System.FillColor = EntityColor
+if entity:FindFirstChild("ESP_GUI") and entity.ESP_GUI:FindFirstChild("Txt") then
+entity.ESP_GUI.Txt.TextColor3 = EntityColor
+end
+end
+end
+end
+end
 })
 
 table.insert(Connections,UserInputService.JumpRequest:Connect(function()
@@ -6398,13 +6472,21 @@ print("hi2")
 
 
 function Unload()
+if noVignetteLoop then
+noVignetteLoop:Disconnect()
+noVignetteLoop = nil
+end
+if noOxygenVignetteLoop then
+noOxygenVignetteLoop:Disconnect()
+noOxygenVignetteLoop = nil
+end
 if WatermarkConnection then
-    WatermarkConnection:Disconnect()
-    WatermarkConnection = nil
+WatermarkConnection:Disconnect()
+WatermarkConnection = nil
 end
 if minecartConnection then
-    minecartConnection:Disconnect()
-    minecartConnection = nil
+minecartConnection:Disconnect()
+minecartConnection = nil
 end
 if ESPLibrary and ESPLibrary.GlobalConfig then
 ESPLibrary.GlobalConfig.Rainbow = false
@@ -6633,7 +6715,7 @@ end
 autoGlitchEnabled = false
     
 if Toggles.AutoGlitch and Toggles.AutoGlitch.Value then
-   Toggles.AutoGlitch:SetValue(false)
+Toggles.AutoGlitch:SetValue(false)
 end
 
 if InfiniteCrucifixConnection then
@@ -6695,18 +6777,18 @@ end
 
 end)
 
-    if AnticheatManipulationLoop then
-        task.cancel(AnticheatManipulationLoop)
-        AnticheatManipulationLoop = nil
-    end
+if AnticheatManipulationLoop then
+task.cancel(AnticheatManipulationLoop)
+AnticheatManipulationLoop = nil
+end
+
+AnticheatManipulationEnabled = false
+
+if alive and AnticheatManipulationOrigin then
+Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
+end
     
-    AnticheatManipulationEnabled = false
-    
-    if alive and AnticheatManipulationOrigin then
-        Character:PivotTo(CFrame.new(AnticheatManipulationOrigin))
-    end
-    
-    AnticheatManipulationOrigin = nil
+AnticheatManipulationOrigin = nil
 end
 
 LocalPlayer.CharacterAdded:Connect(function()
@@ -6740,18 +6822,10 @@ if Toggles.InfiniteSItems and Toggles.InfiniteSItems.Value then
 scanPrompts(ShearsParents, ShearsNames)
 
 end
-
-
-
-
 end
 
 
-
 end)
-
-
-
 
 
 end)
@@ -6760,34 +6834,34 @@ SettingsBox:AddLabel("菜单"):AddKeyPicker("MenuKeybind", { Default = "RightShi
 
 Library.ToggleKeybind = Options.MenuKeybind 
 SettingsBox:AddToggle("ShowKeybinds", {
-		Text = "显示快捷键",
-		Default = false,
-		Tooltip = "显示快捷键菜单",
-	}):OnChanged(function()
-		Library.KeybindFrame.Visible = Toggles.ShowKeybinds.Value
-	end)
+Text = "显示快捷键",
+Default = false,
+Tooltip = "显示快捷键菜单",
+}):OnChanged(function()
+Library.KeybindFrame.Visible = Toggles.ShowKeybinds.Value
+end)
 
 SettingsBox:AddToggle("ShowCustomCursor", {
-		Text = "显示自定义光标",
-		Default = Library.IsMobile == true and true or false,
-		Tooltip = "切换光标的可见性",
-	}):OnChanged(function()
-		Library.ShowCustomCursor = Toggles.ShowCustomCursor.Value
-	end)
+Text = "显示自定义光标",
+Default = Library.IsMobile == true and true or false,
+Tooltip = "切换光标的可见性",
+}):OnChanged(function()
+Library.ShowCustomCursor = Toggles.ShowCustomCursor.Value
+end)
 
 SettingsBox:AddDropdown("DPIDropdown", {
     Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
     Default = "100%",
     Text = "DPI缩放",
-    Callback = function(Value)
-        Value = Value:gsub("%%", "")
-        local DPI = tonumber(Value)
-        Library:SetDPIScale(DPI)
-    end,
+Callback = function(Value)
+Value = Value:gsub("%%", "")
+local DPI = tonumber(Value)
+Library:SetDPIScale(DPI)
+end,
 })
 
-	local Contributors = Tabs.UISettings:AddRightGroupbox("开发人员")
-	Contributors:AddLabel("[所有者] 千change",true)
+local Contributors = Tabs.UISettings:AddRightGroupbox("开发人员")
+Contributors:AddLabel("[所有者] 千change",true)
 
 SettingsBox:AddButton({
      Text = "卸载脚本",
@@ -6800,32 +6874,32 @@ local hubFolder = "Starring"
 local addonFolder = hubFolder.."/Addons"
 
 if not isfolder(hubFolder) then
-    makefolder(hubFolder)
+makefolder(hubFolder)
 end
 
 if not isfolder(addonFolder) then
-    makefolder(addonFolder)
+makefolder(addonFolder)
 end
 
 Starring = Starring or {}
 Starring.Addons = {}
 
 for _, file in ipairs(listfiles(addonFolder)) do
-    if file:sub(-4) == ".lua" or file:sub(-4) == ".txt" then
-        local success, addon = pcall(function()
-            return loadstring(readfile(file))()
-        end)
-        if success and type(addon) == "table" then
-            table.insert(Prohax.Addons, addon)
-            
-                AddonBox:AddToggle(addon.Text, {
-                    Text = addon.Text,
-                    Default = addon.Default,
-                    Callback = addon.Callback
-                })
-            end
-        
-    end
+if file:sub(-4) == ".lua" or file:sub(-4) == ".txt" then
+local success, addon = pcall(function()
+return loadstring(readfile(file))()
+end)
+if success and type(addon) == "table" then
+table.insert(Starring.Addons, addon)
+
+AddonBox:AddToggle(addon.Text, {
+Text = addon.Text,
+Default = addon.Default,
+Callback = addon.Callback
+})
+end
+
+end
 end
 
 
