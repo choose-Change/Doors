@@ -659,7 +659,13 @@ ClosetTran = Tabs.Visuals:AddLeftGroupbox('透明度')
 
 SettingsBox = Tabs.UISettings:AddRightGroupbox('UI')
 
-
+Tabs.Addons:UpdateWarningBox({
+Title = "警告",
+Text = "陌生插件有一定的危险性，插件添加路径(Starring/Addons)",
+IsNormal = false,
+Visible = true,
+LockSize = true,
+})
 
 if Floor.Value == "Rooms" then
 
@@ -4211,7 +4217,7 @@ end
 end
 }):AddColorPicker('DoorColo', {
 	Default = DoorColor,
-	Title = 'Door Color',
+	Title = '门颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4250,7 +4256,7 @@ end
 end
 }):AddColorPicker('TimeLeverColo', {
 	Default = TimerLeverColor,
-	Title = 'Timer Lever Color',
+	Title = '倒计时拉杆颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4312,7 +4318,7 @@ end
 end
 }):AddColorPicker('LeverColo', {
 	Default = LeverColor,
-	Title = 'Lever Color',
+	Title = '户外拉杆颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4352,7 +4358,7 @@ end
 end
 }):AddColorPicker('GeneratorColo', {
 	Default = GeneratorColor,
-	Title = 'Generator Color',
+	Title = '发电机颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4409,7 +4415,7 @@ end
 end
 }):AddColorPicker('FuseESP', {
 	Default = FuseColor,
-	Title = 'Fuse Color',
+	Title = '保险丝颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4446,7 +4452,7 @@ end
 end
 }):AddColorPicker('AnchorColo', {
 	Default = AnchorColor,
-	Title = 'Anchor Color',
+	Title = '锚颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4500,7 +4506,7 @@ end
 end
 }):AddColorPicker('KeyColo', {
 	Default = KeyColor,
-	Title = 'Key Color',
+	Title = '钥匙颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4562,7 +4568,7 @@ end
 end
 }):AddColorPicker('HidingSpot', {
 	Default = HidingSpotColor,
-	Title = 'Hiding Place Color',
+	Title = '躲藏点颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4602,7 +4608,7 @@ end
 end
 }):AddColorPicker('GateLeverColo', {
 	Default = GateLeverColor,
-	Title = 'Gate Lever Color',
+	Title = '门拉杆颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4637,7 +4643,7 @@ end
 end
 }):AddColorPicker('PlayersColo', {
 	Default = PlayersColor,
-	Title = 'Players Color',
+	Title = '玩家颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4691,7 +4697,7 @@ end
 end
 }):AddColorPicker('BooksColo', {
 	Default = BooksColor,
-	Title = 'Books Color',
+	Title = '书颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4732,7 +4738,7 @@ end
 end
 }):AddColorPicker('BreakerColo', {
 	Default = BreakerColor,
-	Title = 'Breaker Color',
+	Title = '断路器颜色',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4815,7 +4821,7 @@ end
 end
 }):AddColorPicker('ItemsColo', {
 	Default = ItemsColor,
-	Title = 'Items Color',
+	Title = '物品透视',
 	Transparency = 0,
 
 Callback = function(Value)
@@ -4901,7 +4907,7 @@ end
 end
 }):AddColorPicker('GoldColor', {
 	Default = GoldColor,
-	Title = 'Gold Color',
+	Title = '金币颜色',
 	Transparency = 0,
 
 Callback = function(Value)
