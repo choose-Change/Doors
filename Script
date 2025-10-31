@@ -616,10 +616,7 @@ Addons = Window:AddTab('插件', 'boxes'),
 }
 
 
-local TabBox = Tabs.Player:AddLeftTabbox() 
-
-local Movement = TabBox:AddTab("移动")
-local Camera = TabBox:AddTab("相机")
+local Movement = Tabs.Player:AddLeftGroupbox("移动")
 
 local MiscBox = Tabs.Player:AddLeftGroupbox("杂项")
 
@@ -652,8 +649,12 @@ local TabBox4 = Tabs.Visuals:AddRightTabbox()
 local NotifyBox = TabBox4:AddTab('通知')
 local NySet = TabBox4:AddTab('设置')
 
-ESP = Tabs.Visuals:AddRightGroupbox('ESP')
-SettingsESP = Tabs.Visuals:AddLeftGroupbox('设置')
+local Camera = Tabs.Visuals:AddRightGroupbox('相机')
+
+local TabBox = Tabs.Visuals:AddLeftTabbox() 
+
+ESP = TabBox:AddTab('ESP')
+SettingsESP = TabBox:AddTab('设置')
 ClosetTran = Tabs.Visuals:AddLeftGroupbox('透明度')
 
 SettingsBox = Tabs.UISettings:AddRightGroupbox('UI')
@@ -2085,7 +2086,7 @@ end
 })
 
 Automation:AddDropdown("IgnoreList", {
-Values = {"Jeff物品","金币","糖果","丢弃物品","故障方块","死亡糖果","捣蛋敲门","Grampy物品"},
+Values = {"Jeff物品","金币","糖果","丢弃物品","故障方块","死亡糖果","Grampy物品"},
     Default = 1,
     Multi = true,
     Text = "忽略列表",
@@ -3402,7 +3403,7 @@ local AnchorHintFrame = MainUI:WaitForChild("AnchorHintFrame")
 if foundAnchor then
                 local noteObj = foundAnchor:FindFirstChild("Note")
                 if not noteObj then
-                    Library:Notify(("密码机 %s 密码是 %s"):format(foundAnchor.Sign.TextLabel.Text, currentCode), 3)
+                    Library:Notify(("锚 %s 密码是 %s"):format(foundAnchor.Sign.TextLabel.Text, currentCode), 3)
                 else
                     local noteText = noteObj.SurfaceGui.TextLabel.Text
                     local change = tonumber(noteText) or 0
@@ -3414,7 +3415,7 @@ if foundAnchor then
                         newcode = newcode .. num
                     end
 
-                    Library:Notify(("密码机 %s 密码是 %s"):format(foundAnchor.Sign.TextLabel.Text, newcode), 1)
+                    Library:Notify(("锚 %s 密码是 %s"):format(foundAnchor.Sign.TextLabel.Text, newcode), 1)
                 end
             end
         end
@@ -3626,7 +3627,7 @@ if Floor.Value == "Mines" then
     local autoAnchorConnection = nil
     
     Automation:AddToggle('AutoAnchorSolver', {
-        Text = "自动解密码机",
+        Text = "自动密码机",
         Default = false,
         Callback = function(Value)
             if Value then
@@ -4425,13 +4426,13 @@ end
 end
 if Floor.Value == "Mines" then
 FloorESP:AddToggle('Anchor',{
-     Text = "密码机",
+     Text = "锚",
      Default = false,
 Callback = function(Value)
 if Value then
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
 if v.Name == "MinesAnchor" then
-AddESP(v,"密码机 " ..  v:WaitForChild("Sign").TextLabel.Text,AnchorColor)
+AddESP(v,"锚 " ..  v:WaitForChild("Sign").TextLabel.Text,AnchorColor)
 end
 end
 else
@@ -5143,35 +5144,35 @@ end
 
 end
 if Toggles.EntitesESP.Value then
-if v.Name == "RushMoving" and Options.EntitiesPicker.Value["Rush"] then
+if v.Name == "RushMoving" then
 addESP(v,"Rush")
 end
 
-if v.Name == "AmbushMoving" and Options.EntitiesPicker.Value["Ambush"] then
+if v.Name == "AmbushMoving" then
 addESP(v,"Ambush")
 end
 
-if v.Name == "A60" and Options.EntitiesPicker.Value["A-60"] then
+if v.Name == "A60" then
 addESP(v,"A-60")
 end
 
-if v.Name == "A120" and Options.EntitiesPicker.Value["A-120"] then
+if v.Name == "A120" then
 addESP(v,"A-120")
 end
 
-if v.Name == "Eyes" and Options.EntitiesPicker.Value["Eyes"] then
+if v.Name == "Eyes" then
 addESP(v,"Eyes")
 end
 
-if v.Name == "BackdoorLookman" and Options.EntitiesPicker.Value["Lookman"] then
+if v.Name == "BackdoorLookman" then
 addESP(v,"Lookman")
 end
 
-if v.Name == "Groundskeeper" and Options.EntitiesPicker.Value["Groundskeeper"] then
+if v.Name == "Groundskeeper" then
 addESP(v, "Groundskeeper")
 end
 
-if v.Name == "MonumentEntity" and Options.EntitiesPicker.Value["Monument"] then
+if v.Name == "MonumentEntity" then
 addESP(v:WaitForChild("Top"),"Monument")
 end
 end
@@ -5280,40 +5281,40 @@ end
 
 end
 if Toggles.EntitesESP.Value then
-if v.Name == "RushMoving" and Options.EntitiesPicker.Value["Rush"] then
+if v.Name == "RushMoving" then
 addESP(v,"Rush")
 end
 
 
 
-if v.Name == "AmbushMoving" and Options.EntitiesPicker.Value["Ambush"] then
+if v.Name == "AmbushMoving" then
 addESP(v,"Ambush")
 end
 
-if v.Name == "A60" and Options.EntitiesPicker.Value["A-60"] then
+if v.Name == "A60" then
 addESP(v,"A-60")
 end
 
-if v.Name == "A120" and Options.EntitiesPicker.Value["A-120"] then
+if v.Name == "A120" then
 addESP(v,"A-120")
 end
 
-if v.Name == "Eyes" and Options.EntitiesPicker.Value["Eyes"] then
+if v.Name == "Eyes" then
 addESP(v,"Eyes")
 end
 
-if v.Name == "BackdoorLookman" and Options.EntitiesPicker.Value["Lookman"] then
+if v.Name == "BackdoorLookman" then
 addESP(v,"Lookman")
 end
-if v.Name == "BackdoorRush" and Options.EntitiesPicker.Value["Blitz"] then
+if v.Name == "BackdoorRush" then
 addESP(v,"Blitz")
 end
 
-if v.Name == "Groundskeeper" and Options.EntitiesPicker.Value["Groundskeeper"] then
+if v.Name == "Groundskeeper" then
 addESP(v, "Groundskeeper")
 end
 
-if v.Name == "MonumentEntity" and Options.EntitiesPicker.Value["Monument"] then
+if v.Name == "MonumentEntity" then
 addESP(v:WaitForChild("Top"),"Monument")
 end
 
@@ -5740,25 +5741,25 @@ if Toggles.AutoInteract.Value then
                                 end
                             end
                         end
+                        if isTrickOrTreat then
+                            return
+                        end
                         
                         if prompt.Parent and prompt.Parent.Name == "GlitchCube" and Options.IgnoreList.Value["故障方块"] then
                             return
                         end
                         if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList.Value["金币"] then return end
                         if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Candy" and Options.IgnoreList.Value["糖果"] then
-                return
-            end
+                            return
+                        end
                         if prompt.Parent:GetAttribute("JeffShop") and Options.IgnoreList.Value["Jeff物品"] then return end
                         if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList.Value["丢弃物品"] then return end
                         if prompt.Parent and prompt.Parent.Name == "Candy" and prompt.Parent:GetAttribute("Tool_CandyID") == "CandyRed" and Options.IgnoreList.Value["死亡糖果"] then
                             return
                         end
-                        if isTrickOrTreat and Options.IgnoreList.Value["捣蛋敲门"] then
+                        if prompt.Parent and prompt.Parent.Parent and prompt.Parent.Parent.Name == "WGrampyShop" and Options.IgnoreList.Value["Grampy物品"] then
                             return
                         end
-                        if prompt.Parent and prompt.Parent.Parent and prompt.Parent.Parent.Name == "WGrampyShop" and Options.IgnoreList.Value["Grampy物品"] then
-                return
-            end
                         if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then return end
                         if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then return end
                         if prompt.Parent and prompt.Parent.Name == "Padlock" then return end
@@ -5977,7 +5978,7 @@ Sound()
 end
 end
 
-if Toggles.EntitesESP.Value and Options.EntitiesPicker.Value["Groundskeeper"] then
+if Toggles.EntitesESP.Value then
 local Groundskeeper = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:FindFirstChild("Groundskeeper", true)
 if Groundskeeper then
 addESP(Groundskeeper, "Groundskeeper")
@@ -6011,7 +6012,7 @@ AddESP(Lever,"门拉杆 ",GateLeverColor)
 
 end
 end
-if Toggles.EntitesESP.Value and Options.EntitiesPicker.Value["Figure"] then
+if Toggles.EntitesESP.Value then
 local Figure = workspace.CurrentRooms:FindFirstChild("FigureRig",true) or workspace.CurrentRooms:FindFirstChild("FigureRagdoll",true)
 
 if Figure then
@@ -6019,7 +6020,7 @@ addESP(Figure,"Figure")
 
 end
 end
-if Toggles.EntitesESP.Value and Options.EntitiesPicker.Value["Bramble"] then
+if Toggles.EntitesESP.Value then
 local Entity = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:FindFirstChild("LiveEntityBramble",true)
 if Entity then
 addESP(Entity,"Bramble")
@@ -6380,7 +6381,7 @@ end
 
 if Toggles.Anchor and Toggles.Anchor.Value then
 if v.Name == "MinesAnchor" then
-AddESP(v,"密码机 " ..  v:WaitForChild("Sign").TextLabel.Text,AnchorColor)
+AddESP(v,"锚 " ..  v:WaitForChild("Sign").TextLabel.Text,AnchorColor)
 end
 end
 
@@ -6405,7 +6406,7 @@ end
 end
 
 
-if v.Name == "GrumbleRig" and Options.EntitiesPicker.Value["Grumble"] then
+if v.Name == "GrumbleRig" then
 addESP(v,"Grumble")
 end
 
