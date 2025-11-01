@@ -137,11 +137,6 @@ print("true hookmetamethod")
 
 
 
-
-
-
-
-
 ThemeManager = loadstring(game:HttpGet(repo..'addons/ThemeManager.lua'))()
 SaveManager  = loadstring(game:HttpGet(repo..'addons/SaveManager.lua'))()
 Options = Library.Options
@@ -596,20 +591,48 @@ local Connections = {}
 
 
 Window = Library:CreateWindow({
-Title = '💠 Starring V2',
+Title = '💠 Starring V3',
 Footer = "感觉我自己好帅",
 Center = true,
 AutoShow = true
 })
 
 Tabs = {
-Player = Window:AddTab('玩家', 'user'),
-Exploits = Window:AddTab('漏洞', 'bug'),
-Visuals = Window:AddTab('视觉', 'scan-eye'),
-Floor = Window:AddTab('楼层', 'sparkles'),
-UISettings = Window:AddTab('配置', 'settings'),
-Info = Window:AddTab('信息', 'info'),
-Addons = Window:AddTab('插件', 'boxes'),
+Player = Window:AddTab({
+Name = "玩家",
+Description = "基础功能", 
+Icon = "user"
+}),
+Exploits = Window:AddTab({
+Name = "漏洞",
+Description = "利用Doors游戏漏洞", 
+Icon = "bug"
+}),
+Visuals = Window:AddTab({
+Name = "视觉",
+Description = "渲染&ESP", 
+Icon = "scan-eye"
+}),
+Floor = Window:AddTab({
+Name = "楼层",
+Description = "基于楼层", 
+Icon = "sparkles"
+}),
+UISettings = Window:AddTab({
+Name = "配置",
+Description = "用户界面&预设", 
+Icon = "settings"
+}),
+Info = Window:AddTab({
+Name = "信息",
+Description = "关于Starring的信息", 
+Icon = "info"
+}),
+Addons = Window:AddTab({
+Name = "插件",
+Description = "Starring的社区插件", 
+Icon = "boxes"
+})
 
 }
 
@@ -651,7 +674,7 @@ ESP = TabBox:AddTab('ESP')
 SettingsESP = TabBox:AddTab('设置')
 ClosetTran = Tabs.Visuals:AddLeftGroupbox('透明度')
 
-SettingsBox = Tabs.UISettings:AddRightGroupbox('UI')
+SettingsBox = Tabs.UISettings:AddRightGroupbox('UI','wrench')
 
 Tabs.Addons:UpdateWarningBox({
 Title = "警告",
@@ -669,12 +692,12 @@ Visible = true,
 LockSize = true,
 })
 
-local Contributors = Tabs.Info:AddLeftGroupbox("开发人员")
-Contributors:AddLabel("[所有者] 千change",true)
+local Contributors = Tabs.Info:AddLeftGroupbox("开发人员","user-round-check")
+Contributors:AddLabel("[千change] 所有者",true)
 
-local TheScript = Tabs.Info:AddRightGroupbox("提供")
-TheScript:AddLabel("[UI库] mstudio45",true)
-TheScript:AddLabel("[ESP库] MSESP - mstudio45",true)
+local TheScript = Tabs.Info:AddRightGroupbox("致谢","user-star")
+TheScript:AddLabel("[mstudio45] 提供UI库",true)
+TheScript:AddLabel("[mstudio45] 提供MSESP库",true)
 
 if Floor.Value == "Rooms" then
 
