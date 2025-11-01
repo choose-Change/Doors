@@ -1989,8 +1989,67 @@ end
 end
 
 end)
-
 Movement:AddDivider()
+
+Movement:AddSlider("JumpPowerSlider", {
+        Text = "跳跃提升",
+        Default = 5,
+        Min = 0,
+        Max = 50,
+        Rounding = 1,
+Compact = false,
+Callback = function(Value)
+end,      
+})
+
+local jumpPowerValue = 5
+local jumpPowerConnections = {}
+local function applyJumpPower()
+local character = LocalPlayer.Character
+if not character then return end
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+if not humanoid then return end
+if jumpPowerConnections.character then
+jumpPowerConnections.character:Disconnect()
+jumpPowerConnections.character = nil
+end
+if jumpPowerConnections.jumpPower then
+jumpPowerConnections.jumpPower:Disconnect()
+jumpPowerConnections.jumpPower = nil
+end
+if jumpPowerConnections.jumpHeight then
+jumpPowerConnections.jumpHeight:Disconnect()
+jumpPowerConnections.jumpHeight = nil
+end
+if humanoid.UseJumpPower then
+humanoid.JumpPower = jumpPowerValue
+jumpPowerConnections.jumpPower = humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+if humanoid.JumpPower ~= jumpPowerValue then
+humanoid.JumpPower = jumpPowerValue
+end
+end)
+else
+humanoid.JumpHeight = jumpPowerValue
+jumpPowerConnections.jumpHeight = humanoid:GetPropertyChangedSignal("JumpHeight"):Connect(function()
+if humanoid.JumpHeight ~= jumpPowerValue then
+humanoid.JumpHeight = jumpPowerValue
+end
+end)
+end
+end
+
+if LocalPlayer.Character then
+applyJumpPower()
+end
+jumpPowerConnections.character = LocalPlayer.CharacterAdded:Connect(function(character)
+character:WaitForChildOfClass("Humanoid")
+applyJumpPower()
+end)
+Options.JumpPowerSlider:OnChanged(function()
+jumpPowerValue = Options.JumpPowerSlider.Value
+applyJumpPower()
+end)
+
 Movement:AddToggle('EnableJump',{
      Text = "启用跳跃",
      Default = false
@@ -6701,6 +6760,12 @@ Library.Unloaded = true
 for i, Toggle in ipairs(Toggles) do
 Toggle:SetValue(false)
 end
+for _, connection in pairs(jumpPowerConnections) do
+if connection then
+connection:Disconnect()
+end
+end
+    jumpPowerConnections = {}
 for _, Connection in ipairs(Connections) do
 Connection:Disconnect()
 end
