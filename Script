@@ -63,9 +63,14 @@ local FakeSurge
 local alive 
 local Pathnode 
 
-local repo = 'https://raw.githubusercontent.com/mstudio45/Obsidian/main/'
-local Executor = identifyexecutor()  or getexecutorname() or "Unknown"
-local Library =  loadstring(game:HttpGet(repo..'Library.lua'))()
+local repo
+if UIStyle == "LinoriaLib" then
+repo = 'https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/'
+else
+repo = 'https://raw.githubusercontent.com/mstudio45/Obsidian/main/'
+end
+local Executor = identifyexecutor() or getexecutorname() or "Unknown"
+local Library = loadstring(game:HttpGet(repo..'Library.lua'))()
 
 Library.ForceCheckbox = true
 
@@ -668,7 +673,7 @@ local Contributors = Tabs.Info:AddLeftGroupbox("开发人员")
 Contributors:AddLabel("[所有者] 千change",true)
 
 local TheScript = Tabs.Info:AddRightGroupbox("提供")
-TheScript:AddLabel("[UI库] Obsidian - mstudio45",true)
+TheScript:AddLabel("[UI库] mstudio45",true)
 TheScript:AddLabel("[ESP库] MSESP - mstudio45",true)
 
 if Floor.Value == "Rooms" then
