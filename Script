@@ -4217,10 +4217,12 @@ local Door = room.Door.Door
 if not Door:GetAttribute("Used") then
 local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+local isLocked = false
+local isOpen = not Door.Anchored
 
 if roomNumber == currentRoom then
 if Door.Parent:FindFirstChild("Lock") then
-displayText = "[上锁] " .. displayText
+isLocked = true
 end
 elseif roomNumber == currentRoom + 1 then
 local keyFound = false
@@ -4231,7 +4233,15 @@ break
 end
 end
 if keyFound then
-displayText = "[上锁] " .. displayText
+isLocked = true
+end
+end
+
+if isOpen then
+displayText = "[已打开] " .. displayText
+else
+if isLocked then
+displayText = "[锁定] " .. displayText
 end
 end
 
@@ -4880,7 +4890,7 @@ local displayText = "箱子"
 if v.Name == "Chest_Vine" then
 displayText = "[藤蔓] 箱子"
 elseif v.Name == "ChestBoxLocked" then
-displayText = "[上锁] 箱子"
+displayText = "[锁定] 箱子"
 elseif v.Name == "Toolshed_Small" then
 displayText = "剪刀柜子"
 end
@@ -5557,6 +5567,57 @@ end
 end
 end
 
+if Toggles.Door and Toggles.Door.Value then
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+local roomNumber = tonumber(room.Name)
+if roomNumber and shouldShowESP(roomNumber) then
+if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
+local Door = room.Door.Door
+if not Door:GetAttribute("Used") then
+local espObject = ESPObjects[Door]
+if espObject then
+local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
+local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+local isLocked = false
+local isOpen = not Door.Anchored
+
+if roomNumber == currentRoom then
+if Door.Parent:FindFirstChild("Lock") then
+isLocked = true
+end
+elseif roomNumber == currentRoom + 1 then
+local keyFound = false
+for _, obj in ipairs(room:GetDescendants()) do
+if obj.Name == "KeyObtain" and not obj:GetAttribute("Used") then
+keyFound = true
+break
+end
+end
+if keyFound then
+isLocked = true
+end
+end
+
+if isOpen then
+displayText = "[已打开] " .. displayText
+else
+if isLocked then
+displayText = "[锁定] " .. displayText
+end
+end
+
+espObject.CurrentSettings.Name = displayText
+
+if espObject.GUI and espObject.GUI.Txt then
+espObject.GUI.Txt.Text = displayText
+end
+end
+end
+end
+end
+end
+end
+
 if Toggles.NoClosetExitDelay.Value then
 if LocalPlayer.Character:GetAttribute("Hiding") == true then
 if (Character.Humanoid.MoveDirection.Magnitude > 0.5)  then
@@ -5852,7 +5913,7 @@ table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Co
                             
                             if roomNumber == currentRoom then
                                 if Door.Parent:FindFirstChild("Lock") then
-                                    displayText = "[上锁] " .. displayText
+                                    displayText = "[锁定] " .. displayText
                                 end
                             elseif roomNumber == currentRoom + 1 then
                                 local keyFound = false
@@ -5863,7 +5924,7 @@ table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Co
                                     end
                                 end
                                 if keyFound then
-                                    displayText = "[上锁] " .. displayText
+                                    displayText = "[锁定] " .. displayText
                                 end
                             end
                             
@@ -5984,27 +6045,30 @@ end
 
 
 if Toggles.Door.Value then
-
-
 local room = LocalPlayer:GetAttribute("CurrentRoom")
 
 local lastroom = room - 1
 local Door = workspace.CurrentRooms[lastroom].Door.Door
 if Door then
 ESPLibrary:RemoveESP(Door)
-
-
 end
-
 
 local Door = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")].Door.Door
 if not Door:GetAttribute("Used") then
+local displayText = "门 " .. Door.Parent:GetAttribute("RoomID")
+local isLocked = Door.Parent:FindFirstChild("Lock") ~= nil
+local isOpen = not Door.Anchored
 
-AddESP(Door, (Door.Parent:FindFirstChild("Lock") and "[上锁] " or "") .. "门 " .. Door.Parent:GetAttribute("RoomID"), DoorColor)
-
+if isOpen then
+displayText = "[已打开] " .. displayText
+elseif isLocked then
+displayText = "[锁定] " .. displayText
 end
 
+AddESP(Door, displayText, DoorColor)
 end
+end
+
 if Toggles.EntityNotifys.Value then
 local v = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:FindFirstChild("Groundskeeper",true)
 if v and Options.EntitiesPicker.Value["Groundskeeper"] then
