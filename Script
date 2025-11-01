@@ -148,7 +148,7 @@ Tracer = {
 Enabled = true,
 Position = "Bottom"
 },
-TextSize = 40,
+TextSize = 16,
 ShowDistance = true,
 ShowTracers = false,
 FillTransparency = 0.7,
@@ -1476,71 +1476,106 @@ Camera:AddToggle('NoCameraShake',{
      Default = false,
 Disabled = Disable1
 })
-
-
-local Y = 0
-local Z = 6
-local X = 2
-
-
 Camera:AddDivider()
 
+local ThirdPersonHandler = {enabled = false, offset = Vector3.new(2, 0, 6)}
 
-Camera:AddToggle('ThirdPerson',{
-     Text = "第三人称",
-     Default = false
-}):AddKeyPicker('ThirdPKeybind', {
+local function ThirdPersonStep()
+if not ThirdPersonHandler.enabled then return end
 
+local cam = workspace.CurrentCamera
+local char = LocalPlayer.Character
+if not cam or not char then return end
 
-		Default = 'T',
-		Mode = 'Toggle',
-		Text = '第三人称',
-		NoUI = false,
-		Callback = function(Value)
-		end,
-		SyncToggleState = true,
-		ChangedCallback = function(New)
-		end
-	})
+cam.CFrame = cam.CFrame * CFrame.new(ThirdPersonHandler.offset)
+
+for _, part in ipairs(char:GetDescendants()) do
+if part:IsA("BasePart") and part.Name == "Head" then
+part.LocalTransparencyModifier = 0
+elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
+part.Handle.LocalTransparencyModifier = 0
+end
+end
+end
+
+pcall(function() RunService:UnbindFromRenderStep("THIRD_PERSON_SYS") end)
+RunService:BindToRenderStep("THIRD_PERSON_SYS", Enum.RenderPriority.Camera.Value+1, ThirdPersonStep)
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+if ThirdPersonHandler.enabled then
+ThirdPersonHandler.enabled = false
+task.wait(0.1)
+ThirdPersonHandler.enabled = true
+end
+end)
+
+local X, Y, Z = 2, 0, 6
 
 Camera:AddSlider("X", {
-        Text = "X",
-        Default = X,
-        Min = -10,
-        Max = 10,
-        Rounding = 0,
-        Compact = true,
-
-        Callback = function(Value)
-          X = Value
-
-     end,      
+    Text = "X",
+    Default = X,
+    Min = -10,
+    Max = 10,
+    Rounding = 0,
+    Compact = true,
+Callback = function(Value)
+X = Value
+ThirdPersonHandler.offset = Vector3.new(X, Y, Z)
+end      
 })
+
 Camera:AddSlider("Y", {
-        Text = "Y",
-        Default = Y,
-        Min = -10,
-        Max = 10,
-        Rounding = 0,
-        Compact = true,
-
-        Callback = function(Value)
-          Y = Value
-
-     end,      
+    Text = "Y",
+    Default = Y,
+    Min = -10,
+    Max = 10,
+    Rounding = 0,
+    Compact = true,
+Callback = function(Value)
+Y = Value
+ThirdPersonHandler.offset = Vector3.new(X, Y, Z)
+end      
 })
+
 Camera:AddSlider("Z", {
-        Text = "Z",
-        Default = Z,
-        Min = -10,
-        Max = 10,
-        Rounding = 0,
-        Compact = true,
+    Text = "Z",
+    Default = Z,
+    Min = -10,
+    Max = 10,
+    Rounding = 0,
+    Compact = true,
+Callback = function(Value)
+Z = Value
+ThirdPersonHandler.offset = Vector3.new(X, Y, Z)
+end      
+})
 
-        Callback = function(Value)
-          Z = Value
-
-     end,      
+Camera:AddToggle('ThirdPerson', {
+    Text = "第三人称",
+    Default = false,
+Callback = function(Value)
+ThirdPersonHandler.enabled = Value
+if not Value then
+local char = LocalPlayer.Character
+if char then
+for _, part in ipairs(char:GetDescendants()) do
+if part:IsA("BasePart") and part.Name == "Head" then
+part.LocalTransparencyModifier = 1
+elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
+part.Handle.LocalTransparencyModifier = 1
+end
+end
+end
+end
+end
+}):AddKeyPicker('ThirdPKeybind', {
+    Default = 'T',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = '第三人称',
+    NoUI = false,
+Callback = function(Value) end,
+ChangedCallback = function(New) end
 })
 Camera:AddDivider()
 
@@ -2918,24 +2953,93 @@ Fly = Fly or {}
 		end
 	})
 
-View = 70
+local FOVhandler = {mem={o=nil,r=nil,u=nil,base={}}, loop=false, cam=nil}
+
+local function FOVstep()
+local parent = LocalPlayer.PlayerGui
+if not parent then return end
+    
+FOVhandler.mem.o = (FOVhandler.mem.o and FOVhandler.mem.o.Parent) and FOVhandler.mem.o or Instance.new("NumberValue", parent)
+    
+local o = FOVhandler.mem.o.Value or 0
+local sum = 0
+for i=1,#FOVhandler.mem.base do
+local v = FOVhandler.mem.base[i]
+if not v or not v.Parent then 
+v = Instance.new("NumberValue", parent)
+FOVhandler.mem.base[i] = v 
+end
+sum = sum + (v.Value or 0)
+end
+local target = (o ~= 0 and o) or sum
+local cam = workspace.CurrentCamera
+if not cam then return end
+
+if cam ~= FOVhandler.cam then
+FOVhandler.cam = cam
+end
+
+if FOVhandler.loop and target > 0 then
+local vis = math.clamp(target, 25, 120)
+if cam.FieldOfView ~= vis then 
+cam.FieldOfView = vis 
+end
+end
+end
+
+pcall(function() RunService:UnbindFromRenderStep("FOV_SYS") end)
+RunService:BindToRenderStep("FOV_SYS", Enum.RenderPriority.Camera.Value+1, FOVstep)
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+FOVhandler.cam = workspace.CurrentCamera
+end)
+
+local View = 70
 Camera:AddSlider("FieldofViewAdjust", {
-        Text = "视野滑块",
-        Default = 70,
-        Min = View,
-        Max = 120,
-        Rounding = 1,
-        Compact = false,
-
-        Callback = function(Value)
-           View = Value
-
-     end,      
+    Text = "视野滑块",
+    Default = 70,
+    Min = 70,
+    Max = 120,
+    Rounding = 1,
+    Compact = false,
+    Callback = function(Value)
+View = Value
+if not FOVhandler.mem.base[1] then
+FOVhandler.mem.base[1] = Instance.new("NumberValue", LocalPlayer.PlayerGui)
+end
+FOVhandler.mem.base[1].Value = Value
+if Toggles.Fieldofview.Value then
+local cam = workspace.CurrentCamera
+if cam then
+local vis = math.clamp(Value, 25, 120)
+cam.FieldOfView = vis
+end
+end
+end
 })
 
-Camera:AddToggle('Fieldofview',{
-     Text = "视野",
-     Default = false
+Camera:AddToggle('Fieldofview', {
+    Text = "视野",
+    Default = false,
+    Callback = function(Value)
+if Value then
+FOVhandler.loop = true
+if not FOVhandler.mem.base[1] then
+FOVhandler.mem.base[1] = Instance.new("NumberValue", LocalPlayer.PlayerGui)
+end
+FOVhandler.mem.base[1].Value = View
+local cam = workspace.CurrentCamera
+if cam then
+local vis = math.clamp(View, 25, 120)
+cam.FieldOfView = vis
+end
+else
+FOVhandler.loop = false
+if FOVhandler.mem.base[1] then
+FOVhandler.mem.base[1].Value = 0
+end
+end
+end
 })
 Anti:AddToggle('AntiDread',{
      Text = "防 Dread",
@@ -5536,11 +5640,6 @@ if Toggles.SpeedBoost.Value then
 Character.Humanoid.WalkSpeed = Speed
 end
 
-if Toggles.Fieldofview.Value then
-
-Workspace.CurrentCamera.FieldOfView = View
-end
-
 if Toggles.AutoCloset.Value then
 local Closet = GetNearestCloset()
 for _, v in ipairs(workspace:GetChildren()) do
@@ -5722,19 +5821,6 @@ local Door = workspace.CurrentRooms[ReplicatedStorage.GameData.LatestRoom.Value]
 if Door and Door:FindFirstChild("ClientOpen") then
 if (Character.HumanoidRootPart.Position - Door.Door.Position).Magnitude < Range then
 Door.ClientOpen:FireServer()
-end
-end
-end
-end
-
-if Toggles.ThirdPerson.Value then
-if alive then
-Workspace.CurrentCamera.CFrame = Workspace.CurrentCamera.CFrame * CFrame.new(X, Y, Z)
-for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-if part:IsA("BasePart")  and part.Name == "Head" then
-part.LocalTransparencyModifier = (Toggles.ThirdPerson.Value and 0) or 1
-elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
-part.Handle.LocalTransparencyModifier = (Toggles.ThirdPerson.Value and 0) or 1
 end
 end
 end
