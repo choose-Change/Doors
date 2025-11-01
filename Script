@@ -144,185 +144,187 @@ Toggles = Library.Toggles
 local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/MSESP/refs/heads/main/source.luau"))()
 
 local ESPConfig = {
-    Tracer = {
-        Enabled = true,
-        Position = "Bottom"
-    },
-    TextSize = 40,
-    ShowDistance = true,
-    ShowTracers = false,
-    FillTransparency = 0.5,
-    OutlineTransparency = 0
+Tracer = {
+Enabled = true,
+Position = "Bottom"
+},
+TextSize = 40,
+ShowDistance = true,
+ShowTracers = false,
+FillTransparency = 0.7,
+OutlineTransparency = 0.4,
+ESPType = "Highlight"
 }
 
 local ESPObjects = {}
 local ESPEnabled = false
 
 function ESPLibrary:AddESP(Part, Txt, Color)
-    if not Part or not Part.Parent then return end
+if not Part or not Part.Parent then return end
     
-    local model = Part
-    if Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
-        model = Part.Parent
-    end
+local model = Part
+if Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
+model = Part.Parent
+end
     
-    if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
-        model = Part
-    end
+if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
+model = Part
+end
     
-    if ESPObjects[model] then
-        ESPObjects[model]:Hide()
-    end
+if ESPObjects[model] then
+ESPObjects[model]:Hide()
+end
     
-    local espObject = ESPLibrary:Add({
-        Name = Txt,
-        Model = model,
-        Color = Color,
-        MaxDistance = 1000,
-        TextSize = ESPConfig.TextSize,
-        ESPType = "Highlight",
-        FillColor = Color,
-        OutlineColor = Color,
-        FillTransparency = ESPConfig.FillTransparency,
-        OutlineTransparency = ESPConfig.OutlineTransparency,
-        Tracer = { 
-            Enabled = ESPConfig.Tracer.Enabled,
-            Color = Color,
-            From = ESPConfig.Tracer.Position
-        }
-    })
+local espObject = ESPLibrary:Add({
+Name = Txt,
+Model = model,
+Color = Color,
+MaxDistance = 1000,
+TextSize = ESPConfig.TextSize,
+ESPType = ESPConfig.ESPType,
+FillColor = Color,
+OutlineColor = Color,
+FillTransparency = ESPConfig.FillTransparency,
+OutlineTransparency = ESPConfig.OutlineTransparency,
+Tracer = { 
+Enabled = ESPConfig.Tracer.Enabled,
+Color = Color,
+From = ESPConfig.Tracer.Position
+}
+})
     
-    ESPObjects[model] = espObject
-    espObject:Show()
+ESPObjects[model] = espObject
+espObject:Show()
 end
 
 function ESPLibrary:RemoveESP(Part)
-    local model = Part
-    if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
-        model = Part
-    elseif Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
-        model = Part.Parent
-    end
-    
-    if ESPObjects[model] then
-        ESPObjects[model]:Hide()
-        ESPObjects[model] = nil
-    end
+local model = Part
+if Part.Name == "Door" and Part.Parent and Part.Parent.Name == "Door" then
+model = Part
+elseif Part:IsA("BasePart") and Part.Parent and Part.Parent:IsA("Model") then
+model = Part.Parent
+end
+
+if ESPObjects[model] then
+ESPObjects[model]:Hide()
+ESPObjects[model] = nil
+end
 end
 
 function ESPLibrary:GenerateRandomString()
-    return game:GetService("HttpService"):GenerateGUID(false)
+return game:GetService("HttpService"):GenerateGUID(false)
 end
 
 function ESPLibrary:Unload()
-    for model, espObject in pairs(ESPObjects) do
-        if espObject and typeof(espObject.Hide) == "function" then
-            espObject:Hide()
-        end
-    end
-    ESPObjects = {}
-    getgenv().ESPLibrary = nil
+for model, espObject in pairs(ESPObjects) do
+if espObject and typeof(espObject.Hide) == "function" then
+espObject:Hide()
+end
+end
+ESPObjects = {}
+getgenv().ESPLibrary = nil
 end
 
 function UpdateAllESPConfig()
-    ESPLibrary.GlobalConfig.Distance = ESPConfig.ShowDistance
-    ESPLibrary.GlobalConfig.Tracers = ESPConfig.ShowTracers
-    
-    for model, espObject in pairs(ESPObjects) do
-        if model and model.Parent and espObject and espObject.CurrentSettings then
-            espObject.CurrentSettings.TextSize = ESPConfig.TextSize
-            espObject.CurrentSettings.Tracer.Enabled = ESPConfig.Tracer.Enabled
-            espObject.CurrentSettings.Tracer.From = ESPConfig.Tracer.Position
-            espObject.CurrentSettings.FillTransparency = ESPConfig.FillTransparency
-            espObject.CurrentSettings.OutlineTransparency = ESPConfig.OutlineTransparency
-            
-            espObject:Hide()
-            espObject:Show()
-        end
-    end
+ESPLibrary.GlobalConfig.Distance = ESPConfig.ShowDistance
+ESPLibrary.GlobalConfig.Tracers = ESPConfig.ShowTracers
+
+for model, espObject in pairs(ESPObjects) do
+if model and model.Parent and espObject and espObject.CurrentSettings then
+espObject.CurrentSettings.TextSize = ESPConfig.TextSize
+espObject.CurrentSettings.Tracer.Enabled = ESPConfig.Tracer.Enabled
+espObject.CurrentSettings.Tracer.From = ESPConfig.Tracer.Position
+espObject.CurrentSettings.FillTransparency = ESPConfig.FillTransparency
+espObject.CurrentSettings.OutlineTransparency = ESPConfig.OutlineTransparency
+espObject.CurrentSettings.ESPType = ESPConfig.ESPType
+
+espObject:Hide()
+espObject:Show()
+end
+end
 end
 
 function RecreateAllESP()
-    local espStates = {
-        Door = Toggles.Door and Toggles.Door.Value,
-        Key = Toggles.Key and Toggles.Key.Value,
-        HidingSpot = Toggles.HidingSpot and Toggles.HidingSpot.Value,
-        GateLever = Toggles.GateLever and Toggles.GateLever.Value,
-        Players = Toggles.Players and Toggles.Players.Value,
-        Books = Toggles.Books and Toggles.Books.Value,
-        Breaker = Toggles.Breaker and Toggles.Breaker.Value,
-        Items = Toggles.Items and Toggles.Items.Value,
-        Gold = Toggles.Gold and Toggles.Gold.Value,
-        EntitesESP = Toggles.EntitesESP and Toggles.EntitesESP.Value,
-        TimerLever = Toggles.TimerLever and Toggles.TimerLever.Value,
-        LeverESP = Toggles.LeverESP and Toggles.LeverESP.Value,
-        Generator = Toggles.Generator and Toggles.Generator.Value,
-        Ladder = Toggles.Ladder and Toggles.Ladder.Value,
-        Fuse = Toggles.Fuse and Toggles.Fuse.Value,
-        Anchor = Toggles.Anchor and Toggles.Anchor.Value,
-        WaterPump = Toggles.WaterPump and Toggles.WaterPump.Value
-    }
+local espStates = {
+Door = Toggles.Door and Toggles.Door.Value,
+Key = Toggles.Key and Toggles.Key.Value,
+HidingSpot = Toggles.HidingSpot and Toggles.HidingSpot.Value,
+GateLever = Toggles.GateLever and Toggles.GateLever.Value,
+Players = Toggles.Players and Toggles.Players.Value,
+Books = Toggles.Books and Toggles.Books.Value,
+Breaker = Toggles.Breaker and Toggles.Breaker.Value,
+Items = Toggles.Items and Toggles.Items.Value,
+Gold = Toggles.Gold and Toggles.Gold.Value,
+EntitesESP = Toggles.EntitesESP and Toggles.EntitesESP.Value,
+TimerLever = Toggles.TimerLever and Toggles.TimerLever.Value,
+LeverESP = Toggles.LeverESP and Toggles.LeverESP.Value,
+Generator = Toggles.Generator and Toggles.Generator.Value,
+Ladder = Toggles.Ladder and Toggles.Ladder.Value,
+Fuse = Toggles.Fuse and Toggles.Fuse.Value,
+Anchor = Toggles.Anchor and Toggles.Anchor.Value,
+WaterPump = Toggles.WaterPump and Toggles.WaterPump.Value
+}
     
-    for model, espObject in pairs(ESPObjects) do
-        if espObject and typeof(espObject.Hide) == "function" then
-            espObject:Hide()
-        end
-    end
-    ESPObjects = {}
-    
-    for espType, isEnabled in pairs(espStates) do
-        if isEnabled then
-            if Toggles[espType] then
-                Toggles[espType]:SetValue(false)
-                Toggles[espType]:SetValue(true)
-            end
-        end
-    end
+for model, espObject in pairs(ESPObjects) do
+if espObject and typeof(espObject.Hide) == "function" then
+espObject:Hide()
+end
+end
+ESPObjects = {}
+
+for espType, isEnabled in pairs(espStates) do
+if isEnabled then
+if Toggles[espType] then
+Toggles[espType]:SetValue(false)
+Toggles[espType]:SetValue(true)
+end
+end
+end
 end
 
 function UpdateFillTransparency(value)
-    ESPConfig.FillTransparency = value
-    for _, espObject in pairs(ESPObjects) do
-        if espObject and espObject.CurrentSettings then
-            espObject.CurrentSettings.FillTransparency = value
-            espObject:Hide()
-            espObject:Show()
-        end
-    end
+ESPConfig.FillTransparency = value
+for _, espObject in pairs(ESPObjects) do
+if espObject and espObject.CurrentSettings then
+espObject.CurrentSettings.FillTransparency = value
+espObject:Hide()
+espObject:Show()
+end
+end
 end
 
 function UpdateOutlineTransparency(value)
-    ESPConfig.OutlineTransparency = value
-    for _, espObject in pairs(ESPObjects) do
-        if espObject and espObject.CurrentSettings then
-            espObject.CurrentSettings.OutlineTransparency = value
-            espObject:Hide()
-            espObject:Show()
-        end
-    end
+ESPConfig.OutlineTransparency = value
+for _, espObject in pairs(ESPObjects) do
+if espObject and espObject.CurrentSettings then
+espObject.CurrentSettings.OutlineTransparency = value
+espObject:Hide()
+espObject:Show()
+end
+end
 end
 
 function UpdateTextSize(value)
-    ESPConfig.TextSize = value
-    for _, espObject in pairs(ESPObjects) do
-        if espObject and espObject.CurrentSettings then
-            espObject.CurrentSettings.TextSize = value
-            espObject:Hide()
-            espObject:Show()
-        end
-    end
+ESPConfig.TextSize = value
+for _, espObject in pairs(ESPObjects) do
+if espObject and espObject.CurrentSettings then
+espObject.CurrentSettings.TextSize = value
+espObject:Hide()
+espObject:Show()
+end
+end
 end
 
 
 local function shouldShowESP(roomNumber)
-    local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
-    if not currentRoom then return false end
-    return roomNumber == currentRoom or roomNumber == currentRoom + 1
+local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+if not currentRoom then return false end
+return roomNumber == currentRoom or roomNumber == currentRoom + 1
 end
 
 
- local raycastParms = RaycastParams.new()
- 
+local raycastParms = RaycastParams.new()
+
 function GetNearestCloset()
 
 local closest = nil
@@ -447,23 +449,23 @@ end)
 LocalPlayer:SetAttribute("StarringLoaded",true)
 
 
- Floor = ReplicatedStorage.GameData.Floor
+Floor = ReplicatedStorage.GameData.Floor
 
 
- RemoteFolder = ReplicatedStorage:FindFirstChild("EntityInfo") or ReplicatedStorage:FindFirstChild("RemotesFolder") or ReplicatedStorage:FindFirstChild("Bricks")
- MainGame = LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game
- RequiredMainGame = require(LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
- RemoteListener = MainGame.RemoteListener
- Modules = RemoteListener.Modules
+RemoteFolder = ReplicatedStorage:FindFirstChild("EntityInfo") or ReplicatedStorage:FindFirstChild("RemotesFolder") or ReplicatedStorage:FindFirstChild("Bricks")
+MainGame = LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game
+RequiredMainGame = require(LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
+RemoteListener = MainGame.RemoteListener
+Modules = RemoteListener.Modules
 
- ClientModules = game:GetService("ReplicatedStorage"):FindFirstChild("ModulesClient") or game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") 
+ClientModules = game:GetService("ReplicatedStorage"):FindFirstChild("ModulesClient") or game:GetService("ReplicatedStorage"):FindFirstChild("ClientModules") 
 if ReplicatedStorage:FindFirstChild("RemotesFolder") then 
 Modifiers = ReplicatedStorage:WaitForChild("LiveModifiers")
 end
 local PlayerGui  = LocalPlayer.PlayerGui 
- Fog = Lighting:FindFirstChild("Fog") or Lighting:FindFirstChild("CaveAtmosphere")
- CollisionClone = nil
- CollisionClone2 = nil
+Fog = Lighting:FindFirstChild("Fog") or Lighting:FindFirstChild("CaveAtmosphere")
+CollisionClone = nil
+CollisionClone2 = nil
 
 Pathnode = Instance.new("Folder",workspace)
 Pathnode.Name = "Path Node"
@@ -474,15 +476,10 @@ local Character = nil
 
 if LocalPlayer.Character then
 
- raycastParms.FilterDescendantsInstances = {LocalPlayer.Character}
+raycastParms.FilterDescendantsInstances = {LocalPlayer.Character}
 raycastParms.FilterType = Enum.RaycastFilterType.Blacklist
 
-
-
 if LocalPlayer.PlayerGui.MainUI.MainFrame.MobileButtons:FindFirstChild("JumpButton") then
-
-
-
 
 
 JumpConnection = LocalPlayer.PlayerGui.MainUI.MainFrame.MobileButtons.JumpButton.MouseButton1Click:Connect(function()
@@ -512,8 +509,6 @@ CollisionClone.Name = "_CollisionPart"
 if CollisionClone:FindFirstChild("CollisionCrouch") then
 CollisionClone.CollisionCrouch:Destroy()
 end
-
-
 
 CollisionClone2 = Character.CollisionPart:Clone()
 CollisionClone2.Parent = Character
@@ -547,9 +542,6 @@ raycastParms.FilterType = Enum.RaycastFilterType.Blacklist
 if LocalPlayer.PlayerGui.MainUI.MainFrame.MobileButtons:FindFirstChild("JumpButton") then
 
 
-
-
-
 JumpConnection = LocalPlayer.PlayerGui.MainUI.MainFrame.MobileButtons.JumpButton.MouseButton1Click:Connect(function()
 if Toggles.InfiniteJump.Value then
 if Character then
@@ -566,9 +558,9 @@ end
 
 
 MainGame = LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game
- RequiredMainGame = require(LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
- RemoteListener = MainGame.RemoteListener
- Modules = RemoteListener.Modules
+RequiredMainGame = require(LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
+RemoteListener = MainGame.RemoteListener
+Modules = RemoteListener.Modules
 
 Character = LocalPlayer.Character
 
@@ -599,18 +591,19 @@ local Connections = {}
 
 
 Window = Library:CreateWindow({
-    Title = '💠 Starring V2',
-    Footer = "感觉我自己好帅",
-    Center = true,
-    AutoShow = true
+Title = '💠 Starring V2',
+Footer = "感觉我自己好帅",
+Center = true,
+AutoShow = true
 })
 
 Tabs = {
-  Player     = Window:AddTab('玩家', 'user'),
-	Exploits       = Window:AddTab('漏洞', 'bug'),
-	Visuals       = Window:AddTab('视觉', 'eye'),
-	Floor     = Window:AddTab('楼层', 'castle'),
-	UISettings = Window:AddTab('配置', 'settings'),
+Player = Window:AddTab('玩家', 'user'),
+Exploits = Window:AddTab('漏洞', 'bug'),
+Visuals = Window:AddTab('视觉', 'scan-eye'),
+Floor = Window:AddTab('楼层', 'sparkles'),
+UISettings = Window:AddTab('配置', 'settings'),
+Info = Window:AddTab('信息', 'info'),
 Addons = Window:AddTab('插件', 'boxes'),
 
 }
@@ -630,10 +623,6 @@ Automation = Tabs.Player:AddRightGroupbox('自动化')
 InfiniteBox = Tabs.Exploits:AddRightGroupbox('无限物品')
 
 local ReachBox = Tabs.Player:AddRightGroupbox('距离')
-
-
-
-
 
 
 FloorAnti = Tabs.Floor:AddLeftGroupbox('楼层绕过')
@@ -666,6 +655,21 @@ IsNormal = false,
 Visible = true,
 LockSize = true,
 })
+
+Tabs.Info:UpdateWarningBox({
+Title = "倒卖替我挡灾",
+Text = "\nStarring是一个针对Roblox游戏《Doors》的玩法拓展脚本\n",
+IsNormal = true,
+Visible = true,
+LockSize = true,
+})
+
+local Contributors = Tabs.Info:AddLeftGroupbox("开发人员")
+Contributors:AddLabel("[所有者] 千change",true)
+
+local TheScript = Tabs.Info:AddRightGroupbox("提供")
+TheScript:AddLabel("[UI库] Obsidian - mstudio45",true)
+TheScript:AddLabel("[ESP库] MSESP - mstudio45",true)
 
 if Floor.Value == "Rooms" then
 
@@ -703,17 +707,12 @@ LocalPlayer.Character.Humanoid:MoveTo(waypoint.Position)
 
 LocalPlayer.Character.Humanoid.MoveToFinished:Wait()
 
-
-
-
 end
 
 end
 
 
 end
-
-
 
 
 function moveto(target)
@@ -747,10 +746,6 @@ end
 
 
 end
-
-
-
-
 
 
 FloorAnti:AddToggle('AutoRooms',{
@@ -1944,6 +1939,16 @@ Movement:AddToggle('InfiniteJump',{
 })
 Movement:AddDivider()
 
+SettingsESP:AddDropdown("ESPType", {
+Values = {"Text", "SphereAdornment", "CylinderAdornment", "Adornment", "SelectionBox", "Highlight"},
+Default = "Highlight",
+Text = "ESP类型",
+Callback = function(Value)
+ESPConfig.ESPType = Value
+RecreateAllESP()
+end,
+})
+
 SettingsESP:AddToggle('EnableShowDistancws',{
      Text = "显示距离",
      Default = false,
@@ -1963,7 +1968,7 @@ SettingsESP:AddToggle("ShowTracersToggle", {
 })
 
 SettingsESP:AddToggle('RainbowESP', {
-    Text = '彩虹ESP',
+    Text = '彩色ESP',
     Default = false,
     Callback = function(Value)
         ESPLibrary.GlobalConfig.Rainbow = Value
@@ -4090,7 +4095,7 @@ Model = model,
 Color = color,
 MaxDistance = 1000,
 TextSize = ESPConfig.TextSize,
-ESPType = "Highlight",
+ESPType = ESPConfig.ESPType,
 FillColor = color,
 OutlineColor = color,
 FillTransparency = ESPConfig.FillTransparency,
@@ -6866,9 +6871,6 @@ local DPI = tonumber(Value)
 Library:SetDPIScale(DPI)
 end,
 })
-
-local Contributors = Tabs.UISettings:AddRightGroupbox("开发人员")
-Contributors:AddLabel("[所有者] 千change",true)
 
 SettingsBox:AddButton({
      Text = "卸载脚本",
