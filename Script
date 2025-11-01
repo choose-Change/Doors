@@ -597,6 +597,17 @@ Center = true,
 AutoShow = true
 })
 
+if UIStyle == "LinoriaLib" then
+Tabs = {
+Player = Window:AddTab("玩家"),
+Exploits = Window:AddTab("漏洞"),
+Visuals = Window:AddTab("视觉"),
+Floor = Window:AddTab("楼层"),
+UISettings = Window:AddTab("配置"),
+Info = Window:AddTab("信息"),
+Addons = Window:AddTab("插件"),
+}
+else
 Tabs = {
 Player = Window:AddTab({
 Name = "玩家",
@@ -633,8 +644,8 @@ Name = "插件",
 Description = "Starring的社区插件", 
 Icon = "boxes"
 })
-
 }
+end
 
 
 local Movement = Tabs.Player:AddLeftGroupbox("移动")
