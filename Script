@@ -2701,6 +2701,102 @@ NotifyBox:AddToggle('HasteClock',{
     end
 })
 
+local hidingTimeConnection = nil
+local hideMonsterHook = nil
+local hidingAttributeConnection = nil
+local hidingNotification = nil
+local hidingStartTime = nil
+local currentHideDuration = nil
+
+NotifyBox:AddToggle('HidingTimeNotify',{
+     Text = "通知躲藏时间",
+     Default = false,
+Callback = function(Value)
+if Value then
+if not hidingTimeConnection then
+if not hideMonsterHook then
+local hideMonsterEvent = RemoteFolder:FindFirstChild("HideMonster")
+if hideMonsterEvent then
+hideMonsterHook = hideMonsterEvent.OnClientEvent:Connect(function(hideDuration)
+if Toggles.HidingTimeNotify.Value then
+hidingStartTime = tick()
+currentHideDuration = hideDuration
+if hidingNotification then
+hidingNotification:Destroy()
+end
+hidingNotification = Library:Notify({
+Title = "玩家躲藏中...",
+Description = "躲藏剩余时间: " .. hideDuration .. "秒",
+Persist = true,
+})
+end
+end)
+end
+end
+hidingTimeConnection = RunService.Heartbeat:Connect(function()
+if not Toggles.HidingTimeNotify.Value then return end
+local isHiding = LocalPlayer.Character and LocalPlayer.Character:GetAttribute("Hiding") == true
+if isHiding and hidingStartTime and currentHideDuration then
+local currentTime = tick()
+local elapsedTime = currentTime - hidingStartTime
+local remainingTime = math.max(0, currentHideDuration - elapsedTime)
+local formattedTime = string.format("%.1f", remainingTime)
+if hidingNotification then
+hidingNotification:ChangeTitle("玩家躲藏中...")
+hidingNotification:ChangeDescription("躲藏剩余时间: " .. formattedTime .. "秒")
+end
+if remainingTime <= 0 then
+if hidingNotification then
+hidingNotification:Destroy()
+hidingNotification = nil
+end
+hidingStartTime = nil
+currentHideDuration = nil
+end
+elseif not isHiding then
+if hidingNotification then
+hidingNotification:Destroy()
+hidingNotification = nil
+end
+hidingStartTime = nil
+currentHideDuration = nil
+end
+end)
+if not hidingAttributeConnection then
+hidingAttributeConnection = LocalPlayer.Character:GetAttributeChangedSignal("Hiding"):Connect(function()
+if not Toggles.HidingTimeNotify.Value then return end
+local isHiding = LocalPlayer.Character:GetAttribute("Hiding")
+if not isHiding and hidingNotification then
+hidingNotification:Destroy()
+hidingNotification = nil
+hidingStartTime = nil
+currentHideDuration = nil
+end
+end)
+end
+end
+else
+if hidingTimeConnection then
+hidingTimeConnection:Disconnect()
+hidingTimeConnection = nil
+end
+if hideMonsterHook then
+hideMonsterHook:Disconnect()
+hideMonsterHook = nil
+end
+if hidingAttributeConnection then
+hidingAttributeConnection:Disconnect()
+hidingAttributeConnection = nil
+end
+if hidingNotification then
+hidingNotification:Destroy()
+hidingNotification = nil
+end
+hidingStartTime = nil
+currentHideDuration = nil
+end
+end
+})
 
 Automation:AddDivider()
 local Breaker = nil
@@ -2818,175 +2914,174 @@ Movement:AddToggle('NoClosetExitDelay',{
 })
 Movement:AddDivider()
 Fly = Fly or {}
-	Fly.Enabled = false
-	Fly.Speed = 15
-	Fly.FlyBody = nil
-	Fly.FlyGyro = nil
+Fly.Enabled = false
+Fly.Speed = 15
+Fly.FlyBody = nil
+Fly.FlyGyro = nil
 
+local renderConn 
+local charAddedConn = nil
+function Fly.SetupBodies(char)
+local root = char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+local bv = Instance.new("BodyVelocity")
+bv.Name = "FlyBodyVelocity"
+bv.MaxForce = Vector3.new(9e99, 9e99, 9e99)
+bv.Velocity = Vector3.zero
+bv.Parent = root
+Fly.FlyBody = bv
+local bg = Instance.new("BodyGyro")
+bg.Name = "FlyBodyGyro"
+bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+local cam = workspace.CurrentCamera
+if cam then
+bg.CFrame = cam.CFrame
+end
+bg.Parent = root
+Fly.FlyGyro = bg
 
-	local renderConn 
-	local charAddedConn = nil
-	function Fly.SetupBodies(char)
-		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then return end
-		local bv = Instance.new("BodyVelocity")
-		bv.Name = "FlyBodyVelocity"
-		bv.MaxForce = Vector3.new(9e99, 9e99, 9e99)
-		bv.Velocity = Vector3.zero
-		bv.Parent = root
-		Fly.FlyBody = bv
-		local bg = Instance.new("BodyGyro")
-		bg.Name = "FlyBodyGyro"
-		bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-		local cam = workspace.CurrentCamera
-		if cam then
-			bg.CFrame = cam.CFrame
-		end
-		bg.Parent = root
-		Fly.FlyGyro = bg
+local humanoid = char:FindFirstChild("Humanoid")
+if humanoid then
+humanoid.PlatformStand = true
+end
+end
 
-		local humanoid = char:FindFirstChild("Humanoid")
-		if humanoid then
-			humanoid.PlatformStand = true
-		end
-	end
+function Fly.CleanupBodies()
+if Fly.FlyBody then
+Fly.FlyBody:Destroy()
+Fly.FlyBody = nil
+end
+if Fly.FlyGyro then
+Fly.FlyGyro:Destroy()
+Fly.FlyGyro = nil
+end
 
-	function Fly.CleanupBodies()
-		if Fly.FlyBody then
-			Fly.FlyBody:Destroy()
-			Fly.FlyBody = nil
-		end
-		if Fly.FlyGyro then
-			Fly.FlyGyro:Destroy()
-			Fly.FlyGyro = nil
-		end
+if Character then
+local humanoid = Character:FindFirstChild("Humanoid")
+if humanoid then
+humanoid.PlatformStand = false
+end
+end
+end
 
-		if Character then
-			local humanoid = Character:FindFirstChild("Humanoid")
-			if humanoid then
-				humanoid.PlatformStand = false
-			end
-		end
-	end
+local function onRenderStepped()
+if not Fly.Enabled then return end
 
-	local function onRenderStepped()
-		if not Fly.Enabled then return end
+local char = Character
+if not char then return end
 
-		local char = Character
-		if not char then return end
+local humanoid = char:FindFirstChild("Humanoid")
+local root = char:FindFirstChild("HumanoidRootPart")
+local cam = workspace.CurrentCamera
+if not humanoid or not root or not Fly.FlyBody or not Fly.FlyGyro or not cam then
+return
+end
 
-		local humanoid = char:FindFirstChild("Humanoid")
-		local root = char:FindFirstChild("HumanoidRootPart")
-		local cam = workspace.CurrentCamera
-		if not humanoid or not root or not Fly.FlyBody or not Fly.FlyGyro or not cam then
-			return
-		end
+local dir = Vector3.zero
 
-		local dir = Vector3.zero
+if UserInputService.KeyboardEnabled then
+local forward = UserInputService:IsKeyDown(Enum.KeyCode.W)
+local back    = UserInputService:IsKeyDown(Enum.KeyCode.S)
+local left    = UserInputService:IsKeyDown(Enum.KeyCode.A)
+local right   = UserInputService:IsKeyDown(Enum.KeyCode.D)
 
-		if UserInputService.KeyboardEnabled then
-			local forward = UserInputService:IsKeyDown(Enum.KeyCode.W)
-			local back    = UserInputService:IsKeyDown(Enum.KeyCode.S)
-			local left    = UserInputService:IsKeyDown(Enum.KeyCode.A)
-			local right   = UserInputService:IsKeyDown(Enum.KeyCode.D)
+local camCFrame = cam.CFrame
+local lookVec = camCFrame.LookVector
+local rightVec = camCFrame.RightVector
 
-			local camCFrame = cam.CFrame
-			local lookVec = camCFrame.LookVector
-			local rightVec = camCFrame.RightVector
+if forward then
+dir = dir + lookVec
+end
+if back then
+dir = dir - lookVec
+end
+if left then
+dir = dir - rightVec
+end
+if right then
+dir = dir + rightVec
+end
+else
+local moveDir = humanoid.MoveDirection
+if moveDir.Magnitude > 0 then
+local camCFrame = cam.CFrame
+local flatLook = Vector3.new(camCFrame.LookVector.X, 0, camCFrame.LookVector.Z)
+local flatRight = Vector3.new(camCFrame.RightVector.X, 0, camCFrame.RightVector.Z)
+if flatLook.Magnitude > 0 then
+flatLook = flatLook.Unit
+end
+if flatRight.Magnitude > 0 then
+flatRight = flatRight.Unit
+end
 
-			if forward then
-				dir = dir + lookVec
-			end
-			if back then
-				dir = dir - lookVec
-			end
-			if left then
-				dir = dir - rightVec
-			end
-			if right then
-				dir = dir + rightVec
-			end
-		else
-			local moveDir = humanoid.MoveDirection
-			if moveDir.Magnitude > 0 then
-				local camCFrame = cam.CFrame
-				local flatLook = Vector3.new(camCFrame.LookVector.X, 0, camCFrame.LookVector.Z)
-				local flatRight = Vector3.new(camCFrame.RightVector.X, 0, camCFrame.RightVector.Z)
-				if flatLook.Magnitude > 0 then
-					flatLook = flatLook.Unit
-				end
-				if flatRight.Magnitude > 0 then
-					flatRight = flatRight.Unit
-				end
+local forwardWeight = moveDir:Dot(flatLook)
+local rightWeight = moveDir:Dot(flatRight)
+dir = camCFrame.LookVector * forwardWeight + camCFrame.RightVector * rightWeight
+end
+end
 
-				local forwardWeight = moveDir:Dot(flatLook)
-				local rightWeight = moveDir:Dot(flatRight)
-				dir = camCFrame.LookVector * forwardWeight + camCFrame.RightVector * rightWeight
-			end
-		end
+if dir.Magnitude > 0 then
+Fly.FlyBody.Velocity = dir.Unit * Fly.Speed
+else
+Fly.FlyBody.Velocity = Vector3.zero
+end
 
-		if dir.Magnitude > 0 then
-			Fly.FlyBody.Velocity = dir.Unit * Fly.Speed
-		else
-			Fly.FlyBody.Velocity = Vector3.zero
-		end
+Fly.FlyGyro.CFrame = cam.CFrame
 
-		Fly.FlyGyro.CFrame = cam.CFrame
+humanoid.PlatformStand = true
+end
 
-		humanoid.PlatformStand = true
-	end
+function Fly.Enable()
+if Fly.Enabled then return end
+Fly.Enabled = true
 
-	function Fly.Enable()
-		if Fly.Enabled then return end
-		Fly.Enabled = true
+local char = Character 
+if char then
+Fly.SetupBodies(char)
+end
 
-		local char = Character 
-		if char then
-			Fly.SetupBodies(char)
-		end
+if not renderConn then
+renderConn = RunService.RenderStepped:Connect(onRenderStepped)
+end
 
-		if not renderConn then
-			renderConn = RunService.RenderStepped:Connect(onRenderStepped)
-		end
+if not charAddedConn then
+charAddedConn = player.CharacterAdded:Connect(function(char2)
+if Fly.Enabled then
+char2:WaitForChild("HumanoidRootPart")
+Fly.SetupBodies(char2)
+end
+end)
+end
+end
 
-		if not charAddedConn then
-			charAddedConn = player.CharacterAdded:Connect(function(char2)
-				if Fly.Enabled then
-					char2:WaitForChild("HumanoidRootPart")
-					Fly.SetupBodies(char2)
-				end
-			end)
-		end
-	end
+function Fly.Disable()
+if not Fly.Enabled then return end
+Fly.Enabled = false
 
-	function Fly.Disable()
-		if not Fly.Enabled then return end
-		Fly.Enabled = false
+Fly.CleanupBodies()
 
-		Fly.CleanupBodies()
+if renderConn then
+renderConn:Disconnect()
+renderConn = nil
+end
 
-		if renderConn then
-			renderConn:Disconnect()
-			renderConn = nil
-		end
+if charAddedConn then
+charAddedConn:Disconnect()
+charAddedConn = nil
+end
+end
 
-		if charAddedConn then
-			charAddedConn:Disconnect()
-			charAddedConn = nil
-		end
-	end
+function Fly.Toggle()
+if Fly.Enabled then
+Fly.Disable()
+else
+Fly.Enable()
+end
+end
 
-	function Fly.Toggle()
-		if Fly.Enabled then
-			Fly.Disable()
-		else
-			Fly.Enable()
-		end
-	end
-
-	function Fly.SetSpeed(newSpeed)
-		Fly.Speed = newSpeed or Fly.Speed
-	end
+function Fly.SetSpeed(newSpeed)
+Fly.Speed = newSpeed or Fly.Speed
+end
 
 	FlySpeed = Movement:AddSlider("FlySpeed", {
 		Text = "飞行速度",
@@ -6732,6 +6827,24 @@ print("hi2")
 
 
 function Unload()
+if hidingTimeConnection then
+hidingTimeConnection:Disconnect()
+hidingTimeConnection = nil
+end
+if hideMonsterHook then
+hideMonsterHook:Disconnect()
+hideMonsterHook = nil
+end
+if hidingAttributeConnection then
+hidingAttributeConnection:Disconnect()
+hidingAttributeConnection = nil
+end
+if hidingNotification then
+hidingNotification:Destroy()
+hidingNotification = nil
+end
+hidingStartTime = nil
+currentHideDuration = nil
 if noVignetteLoop then
 noVignetteLoop:Disconnect()
 noVignetteLoop = nil
