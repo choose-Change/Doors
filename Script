@@ -621,7 +621,7 @@ Icon = "bug"
 }),
 Visuals = Window:AddTab({
 Name = "视觉",
-Description = "渲染&ESP", 
+Description = "渲染&通知", 
 Icon = "scan-eye"
 }),
 Floor = Window:AddTab({
@@ -677,7 +677,10 @@ local TabBox4 = Tabs.Visuals:AddRightTabbox()
 local NotifyBox = TabBox4:AddTab('通知')
 local NySet = TabBox4:AddTab('设置')
 
-local Camera = Tabs.Visuals:AddRightGroupbox('相机')
+local TabBox5 = Tabs.Visuals:AddRightTabbox()
+
+local Camera = TabBox5:AddTab('相机')
+local Effect = TabBox5:AddTab('效果')
 
 local TabBox = Tabs.Visuals:AddLeftTabbox() 
 
@@ -1169,133 +1172,6 @@ end
 
 end
 
-MiscBox:AddToggle('InstantPrompt',{
-     Text = "快速互动",
-     Default = false,
-    Callback = function(Value)
-if Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-
-
-
-if v:IsA("ProximityPrompt") then
-
-
-v:SetAttribute("Hold",v.HoldDuration)
-
-v.HoldDuration = 0
-
-end
-
-end
-
-else
-
-
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-
-
-
-if v:IsA("ProximityPrompt") then
-
-
-
-v.HoldDuration = v:GetAttribute("Hold") or 0.7
-
-end
-
-
-end
-
-end
-
-end
-})
-
-MiscBox:AddToggle('PromptClip',{
-     Text = "穿墙互动",
-     Default = false,
-Callback = function(Value)
-if Value then
-
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-
-
-if v:IsA("ProximityPrompt") then
-
-
-v.RequiresLineOfSight = false
-
-
-end
-
-
-end
-
-else
-
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-
-
-if v:IsA("ProximityPrompt") then
-
-
-v.RequiresLineOfSight = true
-
-
-end
-
-
-end
-
-
-
-end
-
-end
-
-})
-
-
-MiscBox:AddToggle('AntiAfk',{
-     Text = "防挂机",
-     Default = false
-})
-table.insert(Connections,LocalPlayer.Idled:Connect(function()
-
-if Toggles.AntiAfk.Value then
-
-VirtualUser:CaptureController()
-
-VirtualUser:ClickButton2(Vector2.new())
-
-
-
-end
-end))
-
-MiscBox:AddToggle('AntiLag',{
-     Text = "防卡顿",
-     Default = false,
-    Callback = function(Value)
-if Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v:IsA("BasePart") then
-v.Material = Enum.Material.Plastic
-end
-if v.Name == "LightFixture" or v.Name == "Carpet" or v.Name == "CarpetLight" then
-v:Destroy()
-end
-
-
-
-end
-
-end
-end
-
-})
-
 ReachBox:AddToggle('PromptReach',{
      Text = "增长互动",
      Default = false,
@@ -1353,10 +1229,52 @@ ReachBox:AddSlider("DoorReachRange", {
 })
 
 
-MiscBox:AddToggle('NoCutscenes',{
+Effect:AddToggle('NoCutscenes',{
      Text = "无过场动画",
      Default = false
 })
+
+Effect:AddToggle('AntiSpider',{
+     Text = "无蜘蛛突脸",
+     Default = false,
+Callback = function(Value)
+local SpiderModule = ClientModules.EntityModules:FindFirstChild("SpiderJumpscare") or ClientModules.EntityModules:FindFirstChild("_SpiderJumpscare")
+if SpiderModule then
+SpiderModule.Name = Value and "_SpiderJumpscare" or "SpiderJumpscare"
+end
+end
+})
+
+Effect:AddToggle('NoBatDecor',{
+     Text = "无蝙蝠装饰",
+     Default = false,
+Callback = function(Value)
+if Value then
+for _, decor in ipairs(workspace:GetDescendants()) do
+if decor.Name == "HangingHalloweenDecor" and decor:IsA("Model") then
+decor:Destroy()
+end
+end
+             
+if not batDecorConnection then
+batDecorConnection = workspace.DescendantAdded:Connect(function(descendant)
+if Toggles.NoBatDecor and Toggles.NoBatDecor.Value then
+if descendant.Name == "HangingHalloweenDecor" and descendant:IsA("Model") then
+descendant:Destroy()
+end
+end
+end)
+end
+else
+if batDecorConnection then
+batDecorConnection:Disconnect()
+batDecorConnection = nil
+end
+end
+end
+})
+
+local batDecorConnection = nil
 
 local TransparencyValue = 0.5
 ClosetTran:AddSlider("TransparencySlider", {
@@ -1482,6 +1400,37 @@ game.Lighting.Ambient = Color3.fromRGB(0, 0, 0)
 end
 end
 })
+
+local skyRemovalConnection = nil
+
+Camera:AddToggle('AntiFog',{
+Text = "没有雾",
+Default = false,
+Callback = function(Value)
+if Value then
+if Lighting:FindFirstChildOfClass("Sky") then
+Lighting:FindFirstChildOfClass("Sky"):Destroy()
+end
+
+skyRemovalConnection = RunService.Heartbeat:Connect(function()
+if not Toggles.AntiFog.Value then
+return
+end
+
+local currentSky = Lighting:FindFirstChildOfClass("Sky")
+if currentSky then
+currentSky:Destroy()
+end
+end)
+else
+if skyRemovalConnection then
+skyRemovalConnection:Disconnect()
+skyRemovalConnection = nil
+end
+end
+end
+})
+
 Camera:AddToggle('NoCameraShake',{
      Text = "无相机抖动",
      Default = false,
@@ -1522,6 +1471,34 @@ end)
 
 local X, Y, Z = 2, 0, 6
 
+Camera:AddToggle('ThirdPerson', {
+    Text = "第三人称",
+    Default = false,
+Callback = function(Value)
+ThirdPersonHandler.enabled = Value
+if not Value then
+local char = LocalPlayer.Character
+if char then
+for _, part in ipairs(char:GetDescendants()) do
+if part:IsA("BasePart") and part.Name == "Head" then
+part.LocalTransparencyModifier = 1
+elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
+part.Handle.LocalTransparencyModifier = 1
+end
+end
+end
+end
+end
+}):AddKeyPicker('ThirdPKeybind', {
+    Default = 'T',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = '第三人称',
+    NoUI = false,
+Callback = function(Value) end,
+ChangedCallback = function(New) end
+})
+
 Camera:AddSlider("X", {
     Text = "X",
     Default = X,
@@ -1559,34 +1536,6 @@ Callback = function(Value)
 Z = Value
 ThirdPersonHandler.offset = Vector3.new(X, Y, Z)
 end      
-})
-
-Camera:AddToggle('ThirdPerson', {
-    Text = "第三人称",
-    Default = false,
-Callback = function(Value)
-ThirdPersonHandler.enabled = Value
-if not Value then
-local char = LocalPlayer.Character
-if char then
-for _, part in ipairs(char:GetDescendants()) do
-if part:IsA("BasePart") and part.Name == "Head" then
-part.LocalTransparencyModifier = 1
-elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
-part.Handle.LocalTransparencyModifier = 1
-end
-end
-end
-end
-end
-}):AddKeyPicker('ThirdPKeybind', {
-    Default = 'T',
-    SyncToggleState = true,
-    Mode = 'Toggle',
-    Text = '第三人称',
-    NoUI = false,
-Callback = function(Value) end,
-ChangedCallback = function(New) end
 })
 Camera:AddDivider()
 
@@ -1968,38 +1917,6 @@ Movement:AddToggle('SpeedBoost',{
      Default = false
 })
 
-Movement:AddDivider()
-Movement:AddToggle('Noclip',{
-     Text = "穿墙",
-     Default = false
-}):AddKeyPicker('NoclipKeybind', {
-
-
-		Default = 'N',
-		Mode = 'Toggle',
-		Text = '穿墙',
-		NoUI = false,
-		Callback = function(Value)
-		end,
-		SyncToggleState = true,
-		ChangedCallback = function(New)
-		end
-	})
-
-
-Toggles.Noclip:OnChanged(function(Value)
-if not Value then 
-LocalPlayer.Character.Collision.CanCollide = true 
-if Character.Collision:FindFirstChild("CollisionCrouch") then
-LocalPlayer.Character.Collision.CollisionCrouch.CanCollide = true
-end
-LocalPlayer.Character.HumanoidRootPart.CanCollide = true
-if LocalPlayer.Character:FindFirstChild("CollisionPart") then
-LocalPlayer.Character:FindFirstChild("CollisionPart").CanCollide = true
-end
-end
-
-end)
 Movement:AddDivider()
 
 Movement:AddSlider("JumpPowerSlider", {
@@ -2907,10 +2824,135 @@ Movement:AddToggle('Noacceleration',{
      Text = "无打滑",
      Default = false
 })
+
+Movement:AddToggle('InstantPrompt',{
+     Text = "快速互动",
+     Default = false,
+    Callback = function(Value)
+if Value then
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+
+
+
+if v:IsA("ProximityPrompt") then
+
+
+v:SetAttribute("Hold",v.HoldDuration)
+
+v.HoldDuration = 0
+
+end
+
+end
+
+else
+
+
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+
+
+
+if v:IsA("ProximityPrompt") then
+
+
+
+v.HoldDuration = v:GetAttribute("Hold") or 0.7
+
+end
+
+
+end
+
+end
+
+end
+})
+
+Movement:AddToggle('PromptClip',{
+     Text = "穿墙互动",
+     Default = false,
+Callback = function(Value)
+if Value then
+
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+
+
+if v:IsA("ProximityPrompt") then
+
+
+v.RequiresLineOfSight = false
+
+
+end
+
+
+end
+
+else
+
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+
+
+if v:IsA("ProximityPrompt") then
+
+
+v.RequiresLineOfSight = true
+
+
+end
+
+
+end
+
+
+
+end
+
+end
+
+})
+
 Movement:AddDivider()
 Movement:AddToggle('NoClosetExitDelay',{
      Text = "无出柜延迟",
      Default = false
+})
+Movement:AddToggle('AntiAfk',{
+     Text = "防挂机",
+     Default = false
+})
+table.insert(Connections,LocalPlayer.Idled:Connect(function()
+
+if Toggles.AntiAfk.Value then
+
+VirtualUser:CaptureController()
+
+VirtualUser:ClickButton2(Vector2.new())
+
+
+
+end
+end))
+Movement:AddToggle('AntiLag',{
+     Text = "防卡顿",
+     Default = false,
+    Callback = function(Value)
+if Value then
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+if v:IsA("BasePart") then
+v.Material = Enum.Material.Plastic
+end
+if v.Name == "LightFixture" or v.Name == "Carpet" or v.Name == "CarpetLight" then
+v:Destroy()
+end
+
+
+
+end
+
+end
+end
+
 })
 Movement:AddDivider()
 Fly = Fly or {}
@@ -3083,40 +3125,68 @@ function Fly.SetSpeed(newSpeed)
 Fly.Speed = newSpeed or Fly.Speed
 end
 
-	FlySpeed = Movement:AddSlider("FlySpeed", {
-		Text = "飞行速度",
-		Min = 10,
-		Max = 21,
-		Default = Fly.Speed,
-		Rounding = 0,
-		Callback = function(v)
-			Fly.SetSpeed(v)
-		end
-	})
+FlySpeed = Movement:AddSlider("FlySpeed", {
+	Text = "飞行速度",
+	Min = 10,
+	Max = 21,
+	Default = Fly.Speed,
+	Rounding = 0,
+Callback = function(v)
+Fly.SetSpeed(v)
+end
+})
 
-	Movement:AddToggle("Fly", {
-		Text = "飞行",
-		Default = false,
-		Callback = function(enabled)
-			if enabled then
-				Fly.Enable()
-			else
-				Fly.Disable()
-			end
-		end
-	}):AddKeyPicker('Fly Keybind', {
+Movement:AddToggle("Fly", {
+	Text = "飞行",
+	Default = false,
+Callback = function(enabled)
+if enabled then
+Fly.Enable()
+else
+Fly.Disable()
+end
+end
+}):AddKeyPicker('Fly Keybind', {
 
+Default = 'F', 
+SyncToggleState = true,
+Mode = 'Toggle',
+Text = '飞行',
+NoUI = false,
+Callback = function(Value)
+end,
+ChangedCallback = function(New)
+end
+})
 
-		Default = 'F', 
-		SyncToggleState = true,
-		Mode = 'Toggle',
-		Text = '飞行',
-		NoUI = false,
-		Callback = function(Value)
-		end,
-		ChangedCallback = function(New)
-		end
-	})
+Movement:AddToggle('Noclip',{
+     Text = "穿墙",
+     Default = false
+}):AddKeyPicker('NoclipKeybind', {
+
+Default = 'N',
+Mode = 'Toggle',
+Text = '穿墙',
+NoUI = false,
+Callback = function(Value)
+end,
+SyncToggleState = true,
+ChangedCallback = function(New)
+end
+})
+
+Toggles.Noclip:OnChanged(function(Value)
+if not Value then 
+LocalPlayer.Character.Collision.CanCollide = true 
+if Character.Collision:FindFirstChild("CollisionCrouch") then
+LocalPlayer.Character.Collision.CollisionCrouch.CanCollide = true
+end
+LocalPlayer.Character.HumanoidRootPart.CanCollide = true
+if LocalPlayer.Character:FindFirstChild("CollisionPart") then
+LocalPlayer.Character:FindFirstChild("CollisionPart").CanCollide = true
+end
+end
+end)
 
 local FOVhandler = {mem={o=nil,r=nil,u=nil,base={}}, loop=false, cam=nil}
 
@@ -4174,37 +4244,6 @@ ModifiersBox:AddToggle('AntiLookman',{
      Default = false
 })
 
-
-local skyRemovalConnection = nil
-
-ModifiersBox:AddToggle('AntiFog',{
-Text = "没有雾",
-Default = false,
-Callback = function(Value)
-if Value then
-if Lighting:FindFirstChildOfClass("Sky") then
-Lighting:FindFirstChildOfClass("Sky"):Destroy()
-end
-
-skyRemovalConnection = RunService.Heartbeat:Connect(function()
-if not Toggles.AntiFog.Value then
-return
-end
-
-local currentSky = Lighting:FindFirstChildOfClass("Sky")
-if currentSky then
-currentSky:Destroy()
-end
-end)
-else
-if skyRemovalConnection then
-skyRemovalConnection:Disconnect()
-skyRemovalConnection = nil
-end
-end
-end
-})
-
 if Floor.Value == "Party" then
 FloorAnti:AddToggle('AutoGetPowerUps',{
 Text = "自动接通电源",
@@ -4305,38 +4344,6 @@ end
 end
 end 
 })
-
-ModifiersBox:AddToggle('NoBatDecor',{
-     Text = "无蝙蝠装饰",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, decor in ipairs(workspace:GetDescendants()) do
-if decor.Name == "HangingHalloweenDecor" and decor:IsA("Model") then
-decor:Destroy()
-end
-end
-             
-if not batDecorConnection then
-batDecorConnection = workspace.DescendantAdded:Connect(function(descendant)
-if Toggles.NoBatDecor and Toggles.NoBatDecor.Value then
-if descendant.Name == "HangingHalloweenDecor" and descendant:IsA("Model") then
-descendant:Destroy()
-end
-end
-end)
-end
-else
-if batDecorConnection then
-batDecorConnection:Disconnect()
-batDecorConnection = nil
-end
-end
-end
-})
-
-local batDecorConnection = nil
-
 
 local function isPlayerOwnedItem(instance)
 local current = instance
@@ -6919,6 +6926,10 @@ FakeSurge:Destroy()
 end
 if ReplicatedStorage:FindFirstChild("SurgeRemote") then
 ReplicatedStorage.SurgeRemote.Parent = ReplicatedStorage.RemotesFolder
+end
+local SpiderModule = ClientModules.EntityModules:FindFirstChild("_SpiderJumpscare")
+if SpiderModule then
+SpiderModule.Name = "SpiderJumpscare"
 end
 if ClientModules.EntityModules:FindFirstChild("_Shade") then
 ClientModules.EntityModules:FindFirstChild("_Shade").Name = "Shade"
