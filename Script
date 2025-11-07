@@ -652,14 +652,10 @@ local Movement = Tabs.Player:AddLeftGroupbox("移动")
 
 local MiscBox = Tabs.Player:AddLeftGroupbox("杂项")
 
-local TabBox3 = Tabs.Exploits:AddLeftTabbox() 
-
-local Anti = TabBox3:AddTab("实体")
-local Bypass = TabBox3:AddTab("绕过")
-
+local Anti = Tabs.Exploits:AddLeftGroupbox('实体')
 
 Automation = Tabs.Player:AddRightGroupbox('自动化')
-InfiniteBox = Tabs.Exploits:AddRightGroupbox('无限物品')
+Bypass = Tabs.Exploits:AddRightGroupbox('绕过')
 
 local ReachBox = Tabs.Player:AddRightGroupbox('距离')
 
@@ -670,7 +666,7 @@ FloorAnti = Tabs.Floor:AddLeftGroupbox('楼层绕过')
 ModifiersBox = Tabs.Floor:AddLeftGroupbox('修饰符')
 
 
-FloorESP = Tabs.Floor:AddRightGroupbox('ESP')
+FloorAuto = Tabs.Floor:AddRightGroupbox('自动化')
 
 local TabBox4 = Tabs.Visuals:AddRightTabbox()
 
@@ -1061,69 +1057,6 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
         math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
     ));
 end);
-
-local DropTable = {
-RushMoving = 54,
-AmbushMoving = 67,
-A60 = 70
-}
-
-
-InfiniteBox:AddToggle('InfiniteCrucifix', {
-	Text = "无限十字架",
-	Default = false,
-    Risky = true,
-    Tooltip = "你可能会死或失去十字架"
-})
-
-InfiniteBox:AddDivider()
-
-local InfiniteCrucifixConnection
-
-
-InfiniteCrucifixConnection = RunService.RenderStepped:Connect(function()
-
-if Toggles.InfiniteCrucifix.Value then
-
-
-for _, v in ipairs(workspace:GetChildren()) do
-
-local Entity = DropTable[v.Name]
-
-if Entity and v.PrimaryPart then
-v.PrimaryPart.CanCollide = true
-v.PrimaryPart.CanQuery = true
-local origin2  = LocalPlayer.Character.CollisionPart.Position
-local direction2 = (v.PrimaryPart.Position - origin2)
-local result2 = workspace:Raycast(origin2, direction2, raycastParms)
-
-
-if result2 and result2.Instance:IsDescendantOf(v) then
-
-if (LocalPlayer.Character.CollisionPart.Position - v.PrimaryPart.Position).Magnitude < Entity then
-
-ReplicatedStorage.RemotesFolder.DropItem:FireServer(LocalPlayer.Character:FindFirstChildOfClass("Tool"))
-
-task.wait(0.54)
-if Workspace:FindFirstChild("Drops") and Workspace.Drops:FindFirstChild("Crucifix") then
-fireproximityprompt(workspace.Drops:WaitForChild("Crucifix"):FindFirstChildOfClass("ProximityPrompt"))
-end
-
-end
-
-
-end 
-
-end
-
-end
-
-
-end
-
-
-end)
-
 
 SettingsBox:AddToggle('PlaySound',{
      Text = "播放声音",
@@ -1740,148 +1673,6 @@ RemoteFolder.Revive:FireServer()
 end
 })
 
-
-if ReplicatedStorage:FindFirstChild("RemotesFolder") then
-local dropRemote = RemoteFolder:FindFirstChild("DropItem")
-
-
-function addFake(prompt, mode)
-	if not prompt or not prompt:IsA("ProximityPrompt") then return end
-	if prompt:GetAttribute("HasFake") then return end
-	prompt:SetAttribute("HasFake", true)
-	local fake = prompt:Clone()
-	fake.Name = "FakePrompt"
-	fake.Parent = prompt.Parent
-	fake.Enabled = true
-	fake.ClickablePrompt = true
-	prompt.Enabled = false
-	prompt.ClickablePrompt = false
-
-	fake.Triggered:Connect(function()
-		local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-		if not tool then return end
-
-		
-			dropRemote:FireServer(tool)
-		
-
-		local con
-		con = Workspace.Drops.ChildAdded:Connect(function(v)
-			local p = v:FindFirstChildOfClass("ProximityPrompt")
-			if p then
-				if mode == "Lockpick" then
-					fireInteract(p)
-					fireInteract(prompt)
-				elseif mode == "Shears" then
-					fireInteract(prompt)
-					fireInteract(p)
-				end
-
-				task.wait(0.3)
-				con:Disconnect()
-			end
-		end)
-	end)
-end
-
-local function scanPrompts(validParents, validNames)
-	local t = {}
-	for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
-		if v:IsA("ProximityPrompt") and (validParents[v.Parent.Name] or validNames[v.Name]) then
-			table.insert(t, v)
-		end
-	end
-	return t
-end
-
- function cleanupEnableReal()
-	for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
-		if v.Name == "FakePrompt" and v.Parent then
-			v:Destroy()
-		end
-		if v:IsA("ProximityPrompt") and v.Name ~= "FakePrompt" then
-			pcall(function()
-				v.Enabled = true
-				v.ClickablePrompt = true
-if v:GetAttribute("HasFake") == true then
-
-v:SetAttribute("HasFake",nil)
-
-end
-
-			end)
-		end
-	end
-end
-
- LockpickParents = { ChestBoxLocked = true, Locker_Small_Locked = true, Toolbox_Locked = true }
- LockpickNames = { UnlockPrompt = true, ThingToEnable = true, LockPrompt = true,
-SkullPrompt = true, FusesPrompt = true }
-
- ShearsParents = { Chest_Vine = true, CuttableVines = true, Cellar = true }
- ShearsNames = { SkullPrompt = true }
-
-
-local InfiniteValue = false
- InfStore = {}
-local removed = false
-InfiniteBox:AddToggle('InfiniteItems', {
-	Text = "无限撬锁器/骷髅钥匙",
-Disabled = Disable3,
-	Default = false,
-
-	Callback = function(Value)
-		InfiniteValue = Value
-		if not InfiniteValue then
-			cleanupEnableReal()
-			InfStore = {}
-			return
-		end
-		InfStore = scanPrompts(LockpickParents, LockpickNames)
-	end
-})
-
-local InfiniteSValue = false
- InfSStore = {}
-local removed2 = false
-
-InfiniteBox:AddToggle('InfiniteSItems', {
-	Text = "无限剪刀",
-Disabled = Disable3,
-	Default = false,
-	Callback = function(Value)
-		InfiniteSValue = Value
-		if not InfiniteSValue then
-			cleanupEnableReal()
-			InfSStore = {}
-			return
-		end
-		InfSStore = scanPrompts(ShearsParents, ShearsNames)
-						
-		
-	end
-})
-end
-
-InfiniteBox:AddDivider()
-
-InfiniteBox:AddButton({
-	Text = "启用黄色裂缝",
-	Func = function()
-		local Event = game:GetService("ReplicatedStorage").ReplicaRemoteEvents.Replica_ReplicaSetValue
-		firesignal(Event.OnClientEvent, 
-			2,
-			{
-				"StarRiftItem"
-			},
-			{
-				Exists = true
-			}
-		)
-		Library:Notify("黄色裂缝已启用", 3)
-	end
-})
-
  Speed = 15
 Movement:AddSlider("SpeedBoostSlider", {
         Text = "移动速度滑块",
@@ -2341,151 +2132,151 @@ local oxygenHideTimer = nil
 NotifyBox:AddToggle('OxygenNotify',{
      Text = "通知氧气",
      Default = false,
-     Callback = function(Value)
-        if Value then
-            if not oxygenNotifyRunning then
-                oxygenNotifyRunning = true
-                
-                if not oxygenNotifyUI then
-                    oxygenNotifyUI = Instance.new("ScreenGui")
-                    oxygenNotifyUI.Name = "OxygenNotifyUI"
-                    oxygenNotifyUI.Parent = game:GetService("CoreGui")
-                    oxygenNotifyUI.ResetOnSpawn = false
-                    oxygenNotifyUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-                    
-                    local frame = Instance.new("Frame")
-                    frame.Size = UDim2.new(0, 120, 0, 45)
-                    frame.Position = UDim2.new(0.5, -100, 0.8, -30)
-                    frame.AnchorPoint = Vector2.new(0.5, 0.5)
-                    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                    frame.BorderSizePixel = 0
-                    frame.BackgroundTransparency = 0.3
-                    frame.Parent = oxygenNotifyUI
-                    
-                    local corner = Instance.new("UICorner")
-                    corner.CornerRadius = UDim.new(0, 8)
-                    corner.Parent = frame
-                    
-                    local textLabel = Instance.new("TextLabel")
-                    textLabel.Size = UDim2.new(1, 0, 1, 0)
-                    textLabel.BackgroundTransparency = 1
-                    textLabel.Text = "氧气: 100%"
-                    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    textLabel.TextSize = 18
-                    textLabel.Font = Enum.Font.Gotham
-                    textLabel.Parent = frame
-                    
-                    oxygenNotifyUI.Enabled = false
-                end
-                
-                local function updateOxygenDisplay(oxygenValue)
-                    if oxygenNotifyUI and oxygenNotifyUI:FindFirstChildOfClass("Frame") then
-                        local frame = oxygenNotifyUI:FindFirstChildOfClass("Frame")
-                        local textLabel = frame:FindFirstChildOfClass("TextLabel")
-                        
-                        if textLabel then
-                            textLabel.Text = "氧气: " .. tostring(math.floor(oxygenValue)) .. "%"
-                            
-                            if oxygenValue < 30 then
-                                textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-                            elseif oxygenValue < 60 then
-                                textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
-                            else
-                                textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                            end
-                        end
-                    end
-                end
-                
-                local function checkOxygen(character)
-                    if not character then
-                        character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-                    end
-                    
-                    if not character then return nil end
-                    
-                    local oxygenValue = character:GetAttribute("Oxygen")
-                    if oxygenValue then
-                        return oxygenValue
-                    end
-                    
-                    local oxygenObj = character:FindFirstChild("Oxygen")
-                    if oxygenObj and oxygenObj:IsA("NumberValue") then
-                        return oxygenObj.Value
-                    end
-                    
-                    return nil
-                end
-                
-                oxygenNotifyConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                    if not oxygenNotifyRunning then
-                        return
-                    end
-                    
-                    local character = LocalPlayer.Character
-                    
-                    if not character then
-                        oxygenNotifyUI.Enabled = false
-                        return
-                    end
-                    
-                    local oxygenValue = checkOxygen(character)
-                    
-                    if oxygenValue then
-                        if oxygenValue < 100 then
-                            oxygenNotifyUI.Enabled = true
-                            updateOxygenDisplay(oxygenValue)
-                            
-                            if oxygenHideTimer then
-                                oxygenHideTimer:Cancel()
-                                oxygenHideTimer = nil
-                            end
-                        else
-                            if oxygenNotifyUI.Enabled and not oxygenHideTimer then
-                                oxygenHideTimer = task.delay(3, function()
-                                    if oxygenNotifyUI and oxygenNotifyRunning then
-                                        oxygenNotifyUI.Enabled = false
-                                        oxygenHideTimer = nil
-                                    end
-                                end)
-                            end
-                        end
-                    else
-                        oxygenNotifyUI.Enabled = false
-                    end
-                end)
-                
-                LocalPlayer.CharacterAdded:Connect(function(newCharacter)
-                    if not oxygenNotifyRunning then return end
-                    
-                    task.wait(1)
-                    local oxygenValue = checkOxygen(newCharacter)
-                    if oxygenValue and oxygenValue < 100 then
-                        oxygenNotifyUI.Enabled = true
-                        updateOxygenDisplay(oxygenValue)
-                    else
-                        oxygenNotifyUI.Enabled = false
-                    end
-                end)
-            end
-        else
-            oxygenNotifyRunning = false
-            
-            if oxygenNotifyConnection then
-                oxygenNotifyConnection:Disconnect()
-                oxygenNotifyConnection = nil
-            end
-            
-            if oxygenHideTimer then
-                oxygenHideTimer:Cancel()
-                oxygenHideTimer = nil
-            end
-            
-            if oxygenNotifyUI then
-                oxygenNotifyUI.Enabled = false
-            end
-        end
-    end
+Callback = function(Value)
+if Value then
+if not oxygenNotifyRunning then
+oxygenNotifyRunning = true
+
+if not oxygenNotifyUI then
+oxygenNotifyUI = Instance.new("ScreenGui")
+oxygenNotifyUI.Name = "OxygenNotifyUI"
+oxygenNotifyUI.Parent = game:GetService("CoreGui")
+oxygenNotifyUI.ResetOnSpawn = false
+oxygenNotifyUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 120, 0, 45)
+frame.Position = UDim2.new(0.5, -100, 0.8, -30)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.3
+frame.Parent = oxygenNotifyUI
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 1, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.Text = "氧气: 100%"
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+textLabel.TextSize = 18
+textLabel.Font = Enum.Font.Gotham
+textLabel.Parent = frame
+
+oxygenNotifyUI.Enabled = false
+end
+
+local function updateOxygenDisplay(oxygenValue)
+if oxygenNotifyUI and oxygenNotifyUI:FindFirstChildOfClass("Frame") then
+local frame = oxygenNotifyUI:FindFirstChildOfClass("Frame")
+local textLabel = frame:FindFirstChildOfClass("TextLabel")
+
+if textLabel then
+textLabel.Text = "氧气: " .. tostring(math.floor(oxygenValue)) .. "%"
+
+if oxygenValue < 30 then
+textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+elseif oxygenValue < 60 then
+textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
+else
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+end
+end
+end
+end
+
+local function checkOxygen(character)
+if not character then
+character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
+
+if not character then return nil end
+
+local oxygenValue = character:GetAttribute("Oxygen")
+if oxygenValue then
+return oxygenValue
+end
+
+local oxygenObj = character:FindFirstChild("Oxygen")
+if oxygenObj and oxygenObj:IsA("NumberValue") then
+return oxygenObj.Value
+end
+
+return nil
+end
+
+oxygenNotifyConnection = game:GetService("RunService").Heartbeat:Connect(function()
+if not oxygenNotifyRunning then
+return
+end
+
+local character = LocalPlayer.Character
+
+if not character then
+oxygenNotifyUI.Enabled = false
+return
+end
+
+local oxygenValue = checkOxygen(character)
+
+if oxygenValue then
+if oxygenValue < 100 then
+oxygenNotifyUI.Enabled = true
+updateOxygenDisplay(oxygenValue)
+
+if oxygenHideTimer then
+oxygenHideTimer:Cancel()
+oxygenHideTimer = nil
+end
+else
+if oxygenNotifyUI.Enabled and not oxygenHideTimer then
+oxygenHideTimer = task.delay(3, function()
+if oxygenNotifyUI and oxygenNotifyRunning then
+oxygenNotifyUI.Enabled = false
+oxygenHideTimer = nil
+end
+end)
+end
+end
+else
+oxygenNotifyUI.Enabled = false
+end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+if not oxygenNotifyRunning then return end
+
+task.wait(1)
+local oxygenValue = checkOxygen(newCharacter)
+if oxygenValue and oxygenValue < 100 then
+oxygenNotifyUI.Enabled = true
+updateOxygenDisplay(oxygenValue)
+else
+oxygenNotifyUI.Enabled = false
+end
+end)
+end
+else
+oxygenNotifyRunning = false
+
+if oxygenNotifyConnection then
+oxygenNotifyConnection:Disconnect()
+oxygenNotifyConnection = nil
+end
+
+if oxygenHideTimer then
+oxygenHideTimer:Cancel()
+oxygenHideTimer = nil
+end
+
+if oxygenNotifyUI then
+oxygenNotifyUI.Enabled = false
+end
+end
+end
 })
 
 local hasteClockUI = nil
@@ -2495,127 +2286,127 @@ local hasteClockRoomConnection = nil
 NotifyBox:AddToggle('HasteClock',{
      Text = "通知倒计时",
      Default = false,
-     Callback = function(Value)
-        if Value then
-            if not hasteClockUI then
-                hasteClockUI = Instance.new("ScreenGui")
-                hasteClockUI.Name = "HasteClockUI"
-                hasteClockUI.Parent = game:GetService("CoreGui")
-                hasteClockUI.ResetOnSpawn = false
-                hasteClockUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-                
-                local frame = Instance.new("Frame")
-                frame.Size = UDim2.new(0, 150, 0, 45)
-                frame.Position = UDim2.new(0.5, 100, 0.8, -30)
-                frame.AnchorPoint = Vector2.new(0.5, 0.5)
-                frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                frame.BorderSizePixel = 0
-                frame.BackgroundTransparency = 0.3
-                frame.Parent = hasteClockUI
-                
-                local corner = Instance.new("UICorner")
-                corner.CornerRadius = UDim.new(0, 8)
-                corner.Parent = frame
-                
-                local textLabel = Instance.new("TextLabel")
-                textLabel.Size = UDim2.new(1, 0, 1, 0)
-                textLabel.BackgroundTransparency = 1
-                textLabel.Text = "倒计时: --"
-                textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                textLabel.TextSize = 18
-                textLabel.Font = Enum.Font.Gotham
-                textLabel.Parent = frame
-                
-                hasteClockUI.Enabled = false
-            end
-            
-            local function updateTimerDisplay(timerText)
-                if hasteClockUI and hasteClockUI:FindFirstChildOfClass("Frame") then
-                    local frame = hasteClockUI:FindFirstChildOfClass("Frame")
-                    local textLabel = frame:FindFirstChildOfClass("TextLabel")
-                    
-                    if textLabel then
-                        textLabel.Text = "倒计时: " .. timerText
-                    end
-                end
-            end
-            
-            local function getCurrentRoomTimer()
-                local Players = game:GetService("Players")
-                local localPlayer = Players.LocalPlayer
-                
-                if not localPlayer then return nil end
-                
-                local currentRoom = localPlayer:GetAttribute("CurrentRoom")
-                if not currentRoom then return nil end
-                
-                local roomKey = tostring(currentRoom)
-                local currentRooms = workspace:FindFirstChild("CurrentRooms")
-                
-                if not currentRooms then return nil end
-                
-                local room = currentRooms:FindFirstChild(roomKey)
-                if not room then return nil end
-                
-                local door = room:FindFirstChild("Door")
-                if not door then return nil end
-                
-                local displayTimer = door:FindFirstChild("DisplayTimer")
-                if not displayTimer then return nil end
-                
-                return displayTimer.Text.Text
-            end
-            
-            hasteClockConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                if not Toggles.HasteClock.Value then
-                    return
-                end
-                
-                local timerText = getCurrentRoomTimer()
-                
-                if timerText and timerText ~= "" and timerText ~= "..." then
-                    hasteClockUI.Enabled = true
-                    updateTimerDisplay(timerText)
-                else
-                    hasteClockUI.Enabled = false
-                end
-            end)
-            
-            local Players = game:GetService("Players")
-            local localPlayer = Players.LocalPlayer
-            
-            hasteClockRoomConnection = localPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
-                if not Toggles.HasteClock.Value then return end
-                
-                hasteClockUI.Enabled = true
-                updateTimerDisplay("...")
-                
-                task.delay(2, function()
-                    if Toggles.HasteClock.Value then
-                        local timerText = getCurrentRoomTimer()
-                        if not timerText or timerText == "" or timerText == "..." then
-                            hasteClockUI.Enabled = false
-                        end
-                    end
-                end)
-            end)
-            
-        else
-            if hasteClockConnection then
-                hasteClockConnection:Disconnect()
-                hasteClockConnection = nil
-            end
-            
-            if hasteClockRoomConnection then
-                hasteClockRoomConnection:Disconnect()
-                hasteClockRoomConnection = nil
-            end
-            
-            if hasteClockUI then
-                hasteClockUI.Enabled = false
-            end
-        end
-    end
+Callback = function(Value)
+if Value then
+if not hasteClockUI then
+hasteClockUI = Instance.new("ScreenGui")
+hasteClockUI.Name = "HasteClockUI"
+hasteClockUI.Parent = game:GetService("CoreGui")
+hasteClockUI.ResetOnSpawn = false
+hasteClockUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 150, 0, 45)
+frame.Position = UDim2.new(0.5, 100, 0.8, -30)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.3
+frame.Parent = hasteClockUI
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 1, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.Text = "倒计时: --"
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+textLabel.TextSize = 18
+textLabel.Font = Enum.Font.Gotham
+textLabel.Parent = frame
+
+hasteClockUI.Enabled = false
+end
+
+local function updateTimerDisplay(timerText)
+if hasteClockUI and hasteClockUI:FindFirstChildOfClass("Frame") then
+local frame = hasteClockUI:FindFirstChildOfClass("Frame")
+local textLabel = frame:FindFirstChildOfClass("TextLabel")
+
+if textLabel then
+textLabel.Text = "倒计时: " .. timerText
+end
+end
+end
+
+local function getCurrentRoomTimer()
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+if not localPlayer then return nil end
+
+local currentRoom = localPlayer:GetAttribute("CurrentRoom")
+if not currentRoom then return nil end
+
+local roomKey = tostring(currentRoom)
+local currentRooms = workspace:FindFirstChild("CurrentRooms")
+
+if not currentRooms then return nil end
+
+local room = currentRooms:FindFirstChild(roomKey)
+if not room then return nil end
+
+local door = room:FindFirstChild("Door")
+if not door then return nil end
+
+local displayTimer = door:FindFirstChild("DisplayTimer")
+if not displayTimer then return nil end
+
+return displayTimer.Text.Text
+end
+
+hasteClockConnection = game:GetService("RunService").Heartbeat:Connect(function()
+if not Toggles.HasteClock.Value then
+return
+end
+
+local timerText = getCurrentRoomTimer()
+
+if timerText and timerText ~= "" and timerText ~= "..." then
+hasteClockUI.Enabled = true
+updateTimerDisplay(timerText)
+else
+hasteClockUI.Enabled = false
+end
+end)
+
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+hasteClockRoomConnection = localPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
+if not Toggles.HasteClock.Value then return end
+
+hasteClockUI.Enabled = true
+updateTimerDisplay("...")
+
+task.delay(2, function()
+if Toggles.HasteClock.Value then
+local timerText = getCurrentRoomTimer()
+if not timerText or timerText == "" or timerText == "..." then
+hasteClockUI.Enabled = false
+end
+end
+end)
+end)
+
+else
+if hasteClockConnection then
+hasteClockConnection:Disconnect()
+hasteClockConnection = nil
+end
+
+if hasteClockRoomConnection then
+hasteClockRoomConnection:Disconnect()
+hasteClockRoomConnection = nil
+end
+
+if hasteClockUI then
+hasteClockUI.Enabled = false
+end
+end
+end
 })
 
 local hidingTimeConnection = nil
@@ -3476,6 +3267,177 @@ Bypass:AddSlider("SpeedBypassInterval", {
 })
 
 Bypass:AddDivider()
+local DropTable = {
+RushMoving = 54,
+AmbushMoving = 67,
+A60 = 70
+}
+
+
+Bypass:AddToggle('InfiniteCrucifix', {
+	Text = "无限十字架",
+	Default = false,
+    Risky = true,
+    Tooltip = "你可能会死或失去十字架"
+})
+
+local InfiniteCrucifixConnection
+
+InfiniteCrucifixConnection = RunService.RenderStepped:Connect(function()
+
+if Toggles.InfiniteCrucifix.Value then
+
+for _, v in ipairs(workspace:GetChildren()) do
+
+local Entity = DropTable[v.Name]
+
+if Entity and v.PrimaryPart then
+v.PrimaryPart.CanCollide = true
+v.PrimaryPart.CanQuery = true
+local origin2  = LocalPlayer.Character.CollisionPart.Position
+local direction2 = (v.PrimaryPart.Position - origin2)
+local result2 = workspace:Raycast(origin2, direction2, raycastParms)
+
+if result2 and result2.Instance:IsDescendantOf(v) then
+
+if (LocalPlayer.Character.CollisionPart.Position - v.PrimaryPart.Position).Magnitude < Entity then
+
+ReplicatedStorage.RemotesFolder.DropItem:FireServer(LocalPlayer.Character:FindFirstChildOfClass("Tool"))
+
+task.wait(0.54)
+if Workspace:FindFirstChild("Drops") and Workspace.Drops:FindFirstChild("Crucifix") then
+fireproximityprompt(workspace.Drops:WaitForChild("Crucifix"):FindFirstChildOfClass("ProximityPrompt"))
+end
+end
+end
+end
+end
+end
+end)
+
+ if ReplicatedStorage:FindFirstChild("RemotesFolder") then
+local dropRemote = RemoteFolder:FindFirstChild("DropItem")
+
+
+function addFake(prompt, mode)
+	if not prompt or not prompt:IsA("ProximityPrompt") then return end
+	if prompt:GetAttribute("HasFake") then return end
+	prompt:SetAttribute("HasFake", true)
+	local fake = prompt:Clone()
+	fake.Name = "FakePrompt"
+	fake.Parent = prompt.Parent
+	fake.Enabled = true
+	fake.ClickablePrompt = true
+	prompt.Enabled = false
+	prompt.ClickablePrompt = false
+
+	fake.Triggered:Connect(function()
+		local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+		if not tool then return end
+
+		
+			dropRemote:FireServer(tool)
+		
+
+		local con
+		con = Workspace.Drops.ChildAdded:Connect(function(v)
+			local p = v:FindFirstChildOfClass("ProximityPrompt")
+			if p then
+				if mode == "Lockpick" then
+					fireInteract(p)
+					fireInteract(prompt)
+				elseif mode == "Shears" then
+					fireInteract(prompt)
+					fireInteract(p)
+				end
+
+				task.wait(0.3)
+				con:Disconnect()
+			end
+		end)
+	end)
+end
+
+local function scanPrompts(validParents, validNames)
+	local t = {}
+	for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
+		if v:IsA("ProximityPrompt") and (validParents[v.Parent.Name] or validNames[v.Name]) then
+			table.insert(t, v)
+		end
+	end
+	return t
+end
+
+ function cleanupEnableReal()
+	for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
+		if v.Name == "FakePrompt" and v.Parent then
+			v:Destroy()
+		end
+		if v:IsA("ProximityPrompt") and v.Name ~= "FakePrompt" then
+			pcall(function()
+				v.Enabled = true
+				v.ClickablePrompt = true
+if v:GetAttribute("HasFake") == true then
+
+v:SetAttribute("HasFake",nil)
+
+end
+
+			end)
+		end
+	end
+end
+
+ LockpickParents = { ChestBoxLocked = true, Locker_Small_Locked = true, Toolbox_Locked = true }
+ LockpickNames = { UnlockPrompt = true, ThingToEnable = true, LockPrompt = true,
+SkullPrompt = true, FusesPrompt = true }
+
+ ShearsParents = { Chest_Vine = true, CuttableVines = true, Cellar = true }
+ ShearsNames = { SkullPrompt = true }
+
+
+local InfiniteValue = false
+ InfStore = {}
+local removed = false
+Bypass:AddToggle('InfiniteItems', {
+	Text = "无限撬锁器/骷髅钥匙",
+Disabled = Disable3,
+	Default = false,
+
+	Callback = function(Value)
+		InfiniteValue = Value
+		if not InfiniteValue then
+			cleanupEnableReal()
+			InfStore = {}
+			return
+		end
+		InfStore = scanPrompts(LockpickParents, LockpickNames)
+	end
+})
+
+local InfiniteSValue = false
+ InfSStore = {}
+local removed2 = false
+
+Bypass:AddToggle('InfiniteSItems', {
+	Text = "无限剪刀",
+Disabled = Disable3,
+	Default = false,
+	Callback = function(Value)
+		InfiniteSValue = Value
+		if not InfiniteSValue then
+			cleanupEnableReal()
+			InfSStore = {}
+			return
+		end
+		InfSStore = scanPrompts(ShearsParents, ShearsNames)
+						
+		
+	end
+})
+end
+
+Bypass:AddDivider()
 if  ReplicatedStorage:FindFirstChild("RemotesFolder") then 
 
 Bypass:AddDropdown("GMDropdown", {
@@ -3641,6 +3603,23 @@ Bypass:AddToggle('AnticheatManipulation',{
     end
 })
 
+Bypass:AddButton({
+	Text = "启用黄色裂缝",
+	Func = function()
+		local Event = game:GetService("ReplicatedStorage").ReplicaRemoteEvents.Replica_ReplicaSetValue
+		firesignal(Event.OnClientEvent, 
+			2,
+			{
+				"StarRiftItem"
+			},
+			{
+				Exists = true
+			}
+		)
+		Library:Notify("黄色裂缝已启用", 3)
+	end
+})
+
 
 FloorAnti:AddToggle('RankedAntiBanana',{
      Text = "防 Nanner 香蕉",
@@ -3754,7 +3733,7 @@ local PlayerGui = LocalPlayer.PlayerGui
 
     local NotifyCodeValue = false
 
-    FloorAnti:AddToggle("NotifyAnchorCode", {
+    FloorAuto:AddToggle("NotifyAnchorCode", {
         Text = "通知密码机密码",
         Default = false,
         Callback = function(enabled)
@@ -3891,83 +3870,7 @@ local clones = {}
 			end
 		})
 
-function showpath(part)
-    if part.Name == "SeekGuidingLight" and Toggles.ShowSeekPath and Toggles.ShowSeekPath.Value then
-        local Part = Instance.new("Part", Pathnode)
-        Part.Name = "ShowPath"
-        Part.Position = part.Position
-        Part.Size = Vector3.new(2, 2, 2)
-        Part.Shape = Enum.PartType.Ball
-        Part.Color = Color3.new(0, 1, 0)
-        Part.Material = Enum.Material.Neon
-        Part.Anchored = true
-        Part.CanCollide = false
-        Part.CanTouch = false
-        Part.CanQuery = true
-        Debris:AddItem(Part, 150)
-        
-        local nextLight = findNextSeekGuidingLight(part)
-        if nextLight then
-            for i = 1, 5 do
-                local t = i / 6
-                local interpPos = part.Position:Lerp(nextLight.Position, t)
-                
-                local smallPart = Instance.new("Part", Pathnode)
-                smallPart.Name = "ShowPath"
-                smallPart.Position = interpPos
-                smallPart.Size = Vector3.new(2, 2, 2)
-                smallPart.Shape = Enum.PartType.Ball
-                smallPart.Color = Color3.new(0, 1, 0)
-                smallPart.Material = Enum.Material.Neon
-                smallPart.Anchored = true
-                smallPart.CanCollide = false
-                smallPart.CanTouch = false
-                smallPart.CanQuery = true
-                Debris:AddItem(smallPart, 150)
-            end
-        end
-    end
-end
-
-local function findNextSeekGuidingLight(currentLight)
-    local allLights = {}
-    for _, v in ipairs(workspace:GetDescendants()) do
-        if v.Name == "SeekGuidingLight" then
-            table.insert(allLights, v)
-        end
-    end
-    
-    table.sort(allLights, function(a, b)
-        return a.Position.X < b.Position.X or 
-               (a.Position.X == b.Position.X and a.Position.Z < b.Position.Z)
-    end)
-    
-    for i, light in ipairs(allLights) do
-        if light == currentLight and i < #allLights then
-            return allLights[i + 1]
-        end
-    end
-    
-    return nil
-end
-
-FloorAnti:AddToggle("ShowSeekPath", {
-    Text = "显示追逐战路径",
-    Default = false,
-    Callback = function(Value)
-        if Value then
-            for _, v in ipairs(workspace:GetDescendants()) do
-                showpath(v)
-            end
-        else
-            Pathnode:ClearAllChildren()
-        end
-    end
-})
-
-
-
-FloorAnti:AddToggle('AnticheatBypass',{
+FloorAuto:AddToggle('AnticheatBypass',{
      Text = "绕过反作弊",
      Default = false
 })
@@ -4168,7 +4071,7 @@ end
 end
 
 if Floor.Value == "Mines" then
-    FloorAnti:AddToggle('MinecartNoCollision', {
+    FloorAuto:AddToggle('MinecartNoCollision', {
         Text = "矿车无碰撞",
         Default = false,
 Callback = function(Value)
@@ -4226,6 +4129,110 @@ end
     
 local minecartConnection = nil
 end
+
+local SeekPathColor = Color3.new(0, 1, 0)
+local SeekPathThickness = 0.2
+local seekPathLines = {}
+local seekPathUpdateConnection = nil
+
+function updateSeekPathLines()
+for _, line in ipairs(seekPathLines) do
+if line and line.Parent then
+line:Destroy()
+end
+end
+seekPathLines = {}
+
+local allLights = {}
+for _, v in ipairs(workspace:GetDescendants()) do
+if v.Name == "SeekGuidingLight" then
+table.insert(allLights, v)
+end
+end
+
+if #allLights < 2 then
+return
+end
+
+for i = 1, #allLights - 1 do
+local currentLight = allLights[i]
+local nextLight = allLights[i + 1]
+local distance = (currentLight.Position - nextLight.Position).Magnitude
+local center = (currentLight.Position + nextLight.Position) / 2
+
+local linePart = Instance.new("Part", Pathnode)
+linePart.Name = "ShowPathLine"
+linePart.Size = Vector3.new(SeekPathThickness, SeekPathThickness, distance)
+linePart.CFrame = CFrame.lookAt(center, nextLight.Position)
+linePart.Color = SeekPathColor
+linePart.Material = Enum.Material.Neon
+linePart.Anchored = true
+linePart.CanCollide = false
+linePart.CanTouch = false
+linePart.CanQuery = false
+linePart.Transparency = 0
+
+table.insert(seekPathLines, linePart)
+
+end
+end
+
+function clearSeekPathLines()
+for _, line in ipairs(seekPathLines) do
+if line and line.Parent then
+line:Destroy()
+end
+end
+seekPathLines = {}
+
+if seekPathUpdateConnection then
+seekPathUpdateConnection:Disconnect()
+seekPathUpdateConnection = nil
+end
+end
+
+FloorAuto:AddToggle("ShowSeekPath", {
+    Text = "显示追逐战路径",
+    Default = false,
+Callback = function(Value)
+if Value then
+updateSeekPathLines()
+
+seekPathUpdateConnection = RunService.Heartbeat:Connect(function()
+if tick() % 0.5 < 0.016 then
+updateSeekPathLines()
+end
+end)
+else
+clearSeekPathLines()
+end
+end
+}):AddColorPicker('SeekPathColorPicker', {
+    Default = SeekPathColor,
+    Title = '路径颜色',
+    Transparency = 0,
+Callback = function(Value)
+SeekPathColor = Value
+if Toggles.ShowSeekPath and Toggles.ShowSeekPath.Value then
+updateSeekPathLines()
+end
+end
+})
+
+FloorAuto:AddSlider("SeekPathThicknessSlider", {
+    Text = "线体厚度",
+    Default = 0.2,
+    Min = 0.1,
+    Max = 1.0,
+Rounding = 1,
+Compact = true,
+Callback = function(Value)
+SeekPathThickness = Value
+if Toggles.ShowSeekPath and Toggles.ShowSeekPath.Value then
+updateSeekPathLines()
+end
+end
+})
 
 local RankedAntiBananaConnection = nil
 
@@ -4463,22 +4470,15 @@ end
 
 
 local DoorColor = Color3.new(0,1,1)
-local KeyColor = Color3.new(0, 1, 0)
-local GateLeverColor = Color3.new(0,1,0)
-local TimerLeverColor = Color3.new(0,1,0)
 local PlayersColor = Color3.new(1, 1, 1)
 local EntityColor = Color3.new(1, 0, 0)
-local GeneratorColor = Color3.new(0,1,0)
 local HidingSpotColor = Color3.new(0,0.5,0)
-local LeverColor = Color3.new(0,1,0)
-local BooksColor = Color3.new(0,1,0)
-local BreakerColor = Color3.new(0,1,0)
 local ItemsColor = Color3.new(1,0,1)
 local ChestColor = Color3.new(1, 0.8, 0)
 local GoldColor = Color3.new(1, 0.8, 0)
 local StardustColor = Color3.fromRGB(230, 116, 126)
-local FuseColor = Color3.new(0,1,0)
-local AnchorColor =  Color3.new(0,1,0)
+local TaskColor = Color3.new(0, 1, 0)
+local LadderColor = Color3.new(0, 0, 1)
 
 ESP:AddToggle('Door',{
      Text = "门",
@@ -4550,294 +4550,189 @@ end
 end
 })
 
-FloorESP:AddToggle('TimerLever',{
-     Text = "倒计时拉杆",
-     Default = false,
+ESP:AddToggle('TaskESP',{
+Text = "任务",
+Default = false,
 Callback = function(Value)
 if Value then
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local roomNumber = tonumber(room.Name)
-if roomNumber and shouldShowESP(roomNumber) then
-local v = room:FindFirstChild("TimerLever",true)
-if v and v.Name == "TimerLever" then
-AddESP(v,"倒计时拉杆",TimerLeverColor)
-end
-end
-end
-else
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local v = room:FindFirstChild("TimerLever",true)
-if v and v.Name == "TimerLever" then
-ESPLibrary:RemoveESP(v)
-end
-end
-end
-end
-}):AddColorPicker('TimeLeverColo', {
-	Default = TimerLeverColor,
-	Title = '倒计时拉杆颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-TimerLeverColor = Value
-if Toggles.TimerLever.Value then
-
-Toggles.TimerLever:SetValue(false)
-Toggles.TimerLever:SetValue(true)
-
-end
-end
-})
-
-
-FloorESP:AddDivider()
-
-if Floor.Value == "Garden" then
-
-
-FloorESP:AddToggle('LeverESP',{
-     Text = "户外拉杆",
-     Default = false,
-Callback = function(Value)
-
-
-if Value then
-
-
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:GetDescendants()) do
-
-
-if v and v.Parent and v.Parent.Name == "VineGuillotine" and v.Name == "Lever" then
-
-AddESP(v,"户外拉杆",LeverColor)
-
-end
-
-
-end
-
-else
-
-
-for _, v in ipairs(workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:GetDescendants()) do
-
-
-if v and v.Parent and v.Parent.Name == "VineGuillotine" and v.Name == "Lever" then
-
-ESPLibrary:RemoveESP(v)
-
-end
-
-
-end
-
-
-end
-
-end
-}):AddColorPicker('LeverColo', {
-	Default = LeverColor,
-	Title = '户外拉杆颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-LeverColor = Value
-if Toggles.Lever.Value then
-
-Toggles.Lever:SetValue(false)
-Toggles.Lever:SetValue(true)
-
-end
-end
-})
-
-end
-
-
-
-if Floor.Value == "Mines" then
-FloorESP:AddToggle('Generator',{
-     Text = "发电机",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "GeneratorMain" then
-AddESP(v,"发电机",GeneratorColor)
-end
-end
-else
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "GeneratorMain" then
-ESPLibrary:RemoveESP(v)
-
-end
-end
-end
-end
-}):AddColorPicker('GeneratorColo', {
-	Default = GeneratorColor,
-	Title = '发电机颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-GeneratorColor = Value
-if Toggles.Generator.Value then
-
-Toggles.Generator:SetValue(false)
-Toggles.Generator:SetValue(true)
-
-end
-end
-})
-
-FloorESP:AddToggle('Ladder',{
-     Text = "梯子",
-     Default = false,
-Callback = function(Value)
-
-
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-
-if v.Name == "Ladder" then
-AddESP(v,"梯子",Color3.new(0,0,1))
-end
-
-end
-
-end
-})
-
-end
-
-if Floor.Value == "Mines" then
-FloorESP:AddToggle('Fuse',{
-     Text = "保险丝",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "FuseObtain" then
-AddESP(v,"保险丝",FuseColor)
-end
-end
-else
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "FuseObtain" then
-ESPLibrary:RemoveESP(v)
-
-end
-
-end
-
-end
-end
-}):AddColorPicker('FuseESP', {
-	Default = FuseColor,
-	Title = '保险丝颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-FuseColor = Value
-if Toggles.Fuse.Value then
-
-Toggles.Fuse:SetValue(false)
-Toggles.Fuse:SetValue(true)
-
-end
-end
-})
-
-end
-if Floor.Value == "Mines" then
-FloorESP:AddToggle('Anchor',{
-     Text = "锚",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "MinesAnchor" then
-AddESP(v,"锚 " ..  v:WaitForChild("Sign").TextLabel.Text,AnchorColor)
-end
-end
-else
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "MinesAnchor" then
-ESPLibrary:RemoveESP(v)
-end
-end
-
-end
-end
-}):AddColorPicker('AnchorColo', {
-	Default = AnchorColor,
-	Title = '锚颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-AnchorColor = Value
-if Toggles.Anchor.Value then
-
-Toggles.Anchor:SetValue(false)
-Toggles.Anchor:SetValue(true)
-
-end
-	end
-})
-FloorESP:AddToggle('WaterPump',{
-     Text = "水泵",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "WaterPump" then
-AddESP(v,"水泵",Color3.new(0,1,0))
-end
-end
-end
-end
-})
-end
-
-
-ESP:AddToggle('Key',{
-     Text = "钥匙",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local roomNumber = tonumber(room.Name)
-if roomNumber and shouldShowESP(roomNumber) then
-local v = room:FindFirstChild("KeyObtain",true)
+local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
+if not currentRoom then return end
+    
+local roomsToCheck = {currentRoom, currentRoom + 1}
+    
+for _, roomNumber in ipairs(roomsToCheck) do
+local room = workspace.CurrentRooms:FindFirstChild(tostring(roomNumber))
+if room then
+local v = room:FindFirstChild("KeyObtain", true)
 if v and not v:GetAttribute("Used") then
-AddESP(v,"钥匙",KeyColor)
+AddESP(v,"钥匙",TaskColor)
+end
+
+if Floor.Value == "Mines" then
+for _, fuse in ipairs(room:GetDescendants()) do
+if fuse.Name == "FuseObtain" then
+AddESP(fuse,"保险丝",TaskColor)
+end
+end
+end
+
+if roomNumber == currentRoom then
+for _, book in ipairs(room:GetDescendants()) do
+if book.Name == "LiveHintBook" then
+AddESP(book,"书",TaskColor)
+end
+end
+end
+
+if roomNumber == currentRoom then
+for _, breaker in ipairs(room:GetDescendants()) do
+if breaker.Name == "LiveBreakerPolePickup" then
+AddESP(breaker,"断路器",TaskColor)
+end
+end
+end
+
+if Floor.Value == "Mines" then
+for _, anchor in ipairs(room:GetDescendants()) do
+if anchor.Name == "MinesAnchor" then
+AddESP(anchor,"锚 " .. anchor:WaitForChild("Sign").TextLabel.Text,TaskColor)
+end
+end
+end
+
+if Floor.Value == "Mines" then
+for _, generator in ipairs(room:GetDescendants()) do
+if generator.Name == "GeneratorMain" then
+AddESP(generator,"发电机",TaskColor)
+end
+end
+end
+
+if Floor.Value == "Mines" then
+for _, pump in ipairs(room:GetDescendants()) do
+if pump.Name == "WaterPump" then
+AddESP(pump,"水泵",TaskColor)
+end
+end
+end
+
+local timerLever = room:FindFirstChild("TimerLever", true)
+if timerLever and timerLever.Name == "TimerLever" then
+AddESP(timerLever,"倒计时拉杆",TaskColor)
+end
+
+for _, lever in ipairs(room:GetDescendants()) do
+if lever.Name == "LeverForGate" then
+AddESP(lever,"门拉杆",TaskColor)
+end
+end
+
+if Floor.Value == "Garden" and roomNumber == currentRoom then
+for _, v in ipairs(room:GetDescendants()) do
+if v and v.Parent and v.Parent.Name == "VineGuillotine" and v.Name == "Lever" then
+AddESP(v,"户外拉杆",TaskColor)
+end
+end
 end
 end
 end
 else
 for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
 local Key = room:FindFirstChild("KeyObtain",true)
-if Key then
-ESPLibrary:RemoveESP(Key)
+if Key then ESPLibrary:RemoveESP(Key) end
+local TimerLever = room:FindFirstChild("TimerLever",true)
+if TimerLever then ESPLibrary:RemoveESP(TimerLever) end
+local GateLever = room:FindFirstChild("LeverForGate",true)
+if GateLever then ESPLibrary:RemoveESP(GateLever) end
 end
-end
-end
-end
-}):AddColorPicker('KeyColo', {
-	Default = KeyColor,
-	Title = '钥匙颜色',
-	Transparency = 0,
 
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "FuseObtain" then
+ESPLibrary:RemoveESP(v)
+end
+end
+
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "LiveHintBook" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
+
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "LiveBreakerPolePickup" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
+
+if Floor.Value == "Mines" then
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "MinesAnchor" or v.Name == "GeneratorMain" or v.Name == "WaterPump" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
+
+if Floor.Value == "Garden" then
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v and v.Parent and v.Parent.Name == "VineGuillotine" and v.Name == "Lever" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
+end
+end
+end
+}):AddColorPicker('TaskColor', {
+Default = TaskColor,
+Title = '任务颜色',
+Transparency = 0,
 Callback = function(Value)
-KeyColor = Value
-if Toggles.Key.Value then
-
-Toggles.Key:SetValue(false)
-Toggles.Key:SetValue(true)
-
+TaskColor = Value
+if Toggles.TaskESP.Value then
+Toggles.TaskESP:SetValue(false)
+Toggles.TaskESP:SetValue(true)
 end
 end
 })
+
+if Floor.Value == "Mines" then
+ESP:AddToggle('Ladder',{
+Text = "梯子",
+Default = false,
+Callback = function(Value)
+if Value then
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "Ladder" then
+AddESP(v, "梯子", LadderColor)
+end
+end
+else
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "Ladder" then
+ESPLibrary:RemoveESP(v)
+end
+end
+end
+end
+}):AddColorPicker('LadderColor', {
+Default = LadderColor,
+Title = '梯子颜色',
+Transparency = 0,
+Callback = function(Value)
+LadderColor = Value
+if Toggles.Ladder and Toggles.Ladder.Value then
+Toggles.Ladder:SetValue(false)
+Toggles.Ladder:SetValue(true)
+end
+end
+})
+end
+
 local HidingSpots = {
 Wardrobe = "柜子",
 Rooms_Locker = "柜子",
@@ -4901,45 +4796,6 @@ end
 end
 })
 
-ESP:AddToggle('GateLever',{
-     Text = "门拉杆",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local roomNumber = tonumber(room.Name)
-if roomNumber and shouldShowESP(roomNumber) then
-for _, v in ipairs(room:GetDescendants()) do
-if v.Name == "LeverForGate" then
-AddESP(v,"门拉杆",GateLeverColor)
-end
-end
-end
-end
-else
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local Lever = room:FindFirstChild("LeverForGate",true)
-if Lever then 
-ESPLibrary:RemoveESP(Lever)
-end
-end
-end
-end
-}):AddColorPicker('GateLeverColo', {
-	Default = GateLeverColor,
-	Title = '门拉杆颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-GateLeverColor = Value
-if Toggles.GateLever.Value then
-
-Toggles.GateLever:SetValue(false)
-Toggles.GateLever:SetValue(true)
-
-end
-end
-})
 ESP:AddToggle('Players',{
      Text = "玩家",
      Default = false,
@@ -4987,89 +4843,6 @@ end
 
 end)
 end
-
-
-ESP:AddToggle('Books',{
-     Text = "书",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local roomNumber = tonumber(room.Name)
-if roomNumber and shouldShowESP(roomNumber) then
-for _, v in ipairs(room:GetDescendants()) do
-if v.Name == "LiveHintBook" then
-AddESP(v,"书",BooksColor)
-end
-end
-end
-end
-else
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-for _, v in ipairs(room:GetDescendants()) do
-if v.Name == "LiveHintBook" then
-ESPLibrary:RemoveESP(v)
-end
-end
-end
-end
-end
-}):AddColorPicker('BooksColo', {
-	Default = BooksColor,
-	Title = '书颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-BooksColor = Value
-if Toggles.Books.Value then
-
-Toggles.Books:SetValue(false)
-Toggles.Books:SetValue(true)
-
-end
-end
-})
-
-ESP:AddToggle('Breaker',{
-     Text = "断路器",
-     Default = false,
-Callback = function(Value)
-if Value then
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local roomNumber = tonumber(room.Name)
-if roomNumber and shouldShowESP(roomNumber) then
-for _, v in ipairs(room:GetDescendants()) do
-if v.Name == "LiveBreakerPolePickup" then
-AddESP(v,"断路器",BreakerColor)
-end
-end
-end
-end
-else
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-for _, v in ipairs(room:GetDescendants()) do
-if v.Name == "LiveBreakerPolePickup" then
-ESPLibrary:RemoveESP(v)
-end
-end
-end
-end
-end
-}):AddColorPicker('BreakerColo', {
-	Default = BreakerColor,
-	Title = '断路器颜色',
-	Transparency = 0,
-
-Callback = function(Value)
-BreakerColor = Value
-if Toggles.Breaker.Value then
-
-Toggles.Breaker:SetValue(false)
-Toggles.Breaker:SetValue(true)
-
-end
-end
-})
 
  Item = {
 Flashlight = "手电筒",
@@ -6201,33 +5974,17 @@ table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Co
     Toggles.Chest:SetValue(false)
     Toggles.Chest:SetValue(true)
     end
-    if Toggles.Key and Toggles.Key.Value then
-        Toggles.Key:SetValue(false)
-        Toggles.Key:SetValue(true)
-    end
     if Toggles.HidingSpot and Toggles.HidingSpot.Value then
         Toggles.HidingSpot:SetValue(false)
         Toggles.HidingSpot:SetValue(true)
     end
-    if Toggles.GateLever and Toggles.GateLever.Value then
-        Toggles.GateLever:SetValue(false)
-        Toggles.GateLever:SetValue(true)
-    end
-    if Toggles.Books and Toggles.Books.Value then
-        Toggles.Books:SetValue(false)
-        Toggles.Books:SetValue(true)
-    end
-    if Toggles.Breaker and Toggles.Breaker.Value then
-        Toggles.Breaker:SetValue(false)
-        Toggles.Breaker:SetValue(true)
+    if Toggles.TaskESP and Toggles.TaskESP.Value then
+    Toggles.TaskESP:SetValue(false)
+    Toggles.TaskESP:SetValue(true)
     end
     if Toggles.Gold and Toggles.Gold.Value then
         Toggles.Gold:SetValue(false)
         Toggles.Gold:SetValue(true)
-    end
-    if Toggles.TimerLever and Toggles.TimerLever.Value then
-        Toggles.TimerLever:SetValue(false)
-        Toggles.TimerLever:SetValue(true)
     end
 
 if Toggles.AntiSnare.Value then
@@ -6358,18 +6115,18 @@ end
 end
 
 
-if Toggles.Key.Value then
+if Toggles.TaskESP.Value then
 
 local v = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("KeyObtain",true)
 if v and not v:GetAttribute("Used") then
-AddESP(v,"钥匙",KeyColor)
+AddESP(v,"钥匙",TaskColor)
 
 end
 end
-if Toggles.GateLever.Value then
+if Toggles.TaskESP.Value then
 local Lever = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("Assets"):FindFirstChild("LeverForGate")
 if Lever then 
-AddESP(Lever,"门拉杆 ",GateLeverColor)
+AddESP(Lever,"门拉杆 ",TaskColor)
 
 end
 end
@@ -6389,18 +6146,18 @@ addESP(Entity,"Bramble")
 
 end
 end
-if Toggles.Generator and Toggles.Generator.Value then
+if Toggles.TaskESP and Toggles.TaskESP.Value then
 local v = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("GeneratorMain",true)
 if v then 
-AddESP(v,"发电机",GeneratorColor)
+AddESP(v,"发电机",TaskColor)
 
 end
 end
-if Toggles.TimerLever.Value then
+if Toggles.TaskESP.Value then
 local v = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:FindFirstChild("TimerLever",true)
 if v then
 
-AddESP(v,"倒计时拉杆",TimerLeverColor)
+AddESP(v,"倒计时拉杆",TaskColor)
 end
 end
 if Toggles.HidingSpot.Value then
@@ -6653,10 +6410,10 @@ if v.Name == "ElevatorBreaker" then
 Breaker = v
 end
 end
-if Toggles.WaterPump and Toggles.WaterPump.Value then
+if Toggles.TaskESP and Toggles.TaskESP.Value then
 
 if v.Name == "WaterPump" then
-AddESP(v,"水泵",Color3.new(0,1,0))
+AddESP(v,"水泵",TaskColor)
 end
 
 end
@@ -6690,13 +6447,6 @@ end
 end
 end
 
-
-if Toggles.ShowSeekPath and Toggles.ShowSeekPath.Value then
-
-showpath(v)
-
-end
-
 if Toggles.AntiSeekObstructions.Value then
 if v.Name == "ChandelierObstruction" or v.Name == "Seek_Arm" then
 for _, part in ipairs(v:GetChildren()) do
@@ -6709,15 +6459,15 @@ end
 
 
 
-if Toggles.Books.Value then
+if Toggles.TaskESP.Value then
 if v.Name == "LiveHintBook" then
-AddESP(v,"书",BooksColor)
+AddESP(v,"书",TaskColor)
 end
 end
 
-if Toggles.Breaker.Value then
+if Toggles.TaskESP.Value then
 if v.Name == "LiveBreakerPolePickup" then
-AddESP(v,"断路器",BreakerColor)
+AddESP(v,"断路器",TaskColor)
 end
 end
 
@@ -6740,9 +6490,9 @@ end
 
 
 
-if Toggles.Anchor and Toggles.Anchor.Value then
+if Toggles.TaskESP and Toggles.TaskESP.Value then
 if v.Name == "MinesAnchor" then
-AddESP(v,"锚 " ..  v:WaitForChild("Sign").TextLabel.Text,AnchorColor)
+AddESP(v,"锚 " ..  v:WaitForChild("Sign").TextLabel.Text,TaskColor)
 end
 end
 
@@ -6755,14 +6505,14 @@ end
 
 
 end
-if Toggles.Fuse and Toggles.Fuse.Value then
+if Toggles.TaskESP and Toggles.TaskESP.Value then
 
 
 
 if v.Name == "FuseObtain" then
 
 
-AddESP(v,"保险丝",FuseColor)
+AddESP(v,"保险丝",TaskColor)
 end
 end
 
@@ -6780,11 +6530,11 @@ end
 
 end
 
-if (Floor.Value == "Garden") and Toggles.LeverESP.Value then
+if (Floor.Value == "Garden") and Toggles.TaskESP.Value then
 
 if v and v.Parent and v.Parent.Name == "VineGuillotine" and v.Name == "Lever" then
 
-AddESP(v,"户外拉杆",Color3.new(0,1,0))
+AddESP(v,"户外拉杆",TaskColor)
 
 
 end
