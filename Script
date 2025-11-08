@@ -592,7 +592,7 @@ local Connections = {}
 
 Window = Library:CreateWindow({
 Title = '💠 Starring V3',
-Footer = "感觉我自己好帅",
+Footer = "倒卖替我挡灾",
 Center = true,
 AutoShow = true
 })
@@ -690,14 +690,6 @@ Tabs.Addons:UpdateWarningBox({
 Title = "警告",
 Text = "陌生插件有一定的危险性，插件添加路径(Starring/Addons)",
 IsNormal = false,
-Visible = true,
-LockSize = true,
-})
-
-Tabs.Info:UpdateWarningBox({
-Title = "倒卖替我挡灾",
-Text = "\nStarring是一个针对Roblox游戏《Doors》的玩法拓展脚本\n",
-IsNormal = true,
 Visible = true,
 LockSize = true,
 })
@@ -4128,7 +4120,6 @@ end
 })
     
 local minecartConnection = nil
-end
 
 local SeekPathColor = Color3.new(0, 1, 0)
 local SeekPathThickness = 0.2
@@ -4233,6 +4224,7 @@ updateSeekPathLines()
 end
 end
 })
+end
 
 local RankedAntiBananaConnection = nil
 
