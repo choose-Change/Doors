@@ -1834,10 +1834,9 @@ SettingsESP:AddSlider("TracerThicknessSlider", {
     Max = 5.0,
     Rounding = 1,
     Compact = true,
-    Callback = function(Value)
-        ESPConfig.Tracer.Thickness = Value
-        UpdateAllESPConfig()
-    end
+Callback = function(Value)
+ESPConfig.Tracer.Thickness = Value
+end
 })
 
 SettingsESP:AddSlider("ESPFillTransparency", {
@@ -5579,6 +5578,19 @@ end
 
 end
 
+if ESPLibrary and ESPLibrary.GlobalConfig then
+for model, espObject in pairs(ESPObjects) do
+if model and model.Parent and espObject and espObject.CurrentSettings then
+if espObject.CurrentSettings.Tracer then
+espObject.CurrentSettings.Tracer.Thickness = ESPConfig.Tracer.Thickness
+end
+if espObject.GUI and espObject.GUI.Tracer then
+espObject:Hide()
+espObject:Show()
+end
+end
+end
+end
 
 if Toggles.SpeedBoost.Value then
 
