@@ -76,13 +76,12 @@ Library.ForceCheckbox = true
 
 Library:Notify("正在加载Starring | Doors",5)
 
-if Executor == "Xeno" or Executor == "xeno" then Library:Notify("Not Supported Executor",3) return end
+if Executor == "Xeno" or Executor == "xeno" then Library:Notify("注入器不支持启动",3) return end
 
 local success, result = pcall(function()
 return RequiredMainGame
 end)
 if not success then
-Library:Notify("Require Is  Not Supported Some Features would be disabled",3)
 Disable1 = true
 print("false require")
 end
@@ -90,7 +89,6 @@ end
 print("true require")
  
 if not isnetworkowner then
-Library:Notify("isnetworkowner  not supported some features would be disabled",3)
 Disable2 = true
 print("false isnetworkowner")
 end
@@ -104,7 +102,6 @@ return fireproximityprompt(Prompt)
 end)
 if not success then
 Prompt:Destroy()
-Library:Notify("fireproximityprompt is not supported methods would change stillwork but less reliable some will not work will be disabled",4)
 Disable3 = true
 print("false fireproximityprompt")
 end
@@ -114,7 +111,6 @@ Prompt:Destroy()
 
 if not replicatesignal then
 Disable4 = true
-Library:Notify("replicatesignal  not supported methods would change stillwork but less reliable",3)
 print("false replicatesignal")
 end
 print("true replicatesignal")
@@ -1165,6 +1161,53 @@ end
 end
 })
 
+Effect:AddToggle('AntiGlitch',{
+     Text = "无故障跳吓",
+     Default = false,
+     Callback = function(Value)
+local GlitchModule = ClientModules.EntityModules:FindFirstChild("Glitch") or ClientModules.EntityModules:FindFirstChild("_Glitch")
+if GlitchModule then
+GlitchModule.Name = Value and "_Glitch" or "Glitch"
+end
+end
+})
+
+local notifysound = 4590657391
+local VoidModule
+
+MainGame = LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game
+RequiredMainGame = require(LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
+RemoteListener = MainGame.RemoteListener
+Modules = RemoteListener.Modules
+
+local success, result = pcall(function()
+VoidModule = require(ClientModules.EntityModules.Void)
+end)
+if not success then
+pcall(function()
+VoidModule = require(game.ReplicatedStorage.ModulesClient.EntityModules.Void)
+end)
+end
+
+Effect:AddToggle('AntiVoid',{
+     Text = "无虚空跳吓",
+     Default = false,
+Callback = function(Value)
+if VoidModule then
+if Value then
+if not VoidModule.originalStuff then
+VoidModule.originalStuff = VoidModule.stuff
+end
+VoidModule.stuff = function() end
+else
+if VoidModule.originalStuff then
+VoidModule.stuff = VoidModule.originalStuff
+end
+end
+end
+end
+})
+
 Effect:AddToggle('NoBatDecor',{
      Text = "无蝙蝠装饰",
      Default = false,
@@ -1236,9 +1279,7 @@ Text = "矿车透明",
 Default = false
 })
 
-ClosetTran:AddDivider()
-
-ClosetTran:AddToggle('NoVignette', {
+Effect:AddToggle('NoVignette', {
     Text = "柜子无暗角",
     Default = false
 })
@@ -1270,8 +1311,8 @@ end
 end
 end)
 
-ClosetTran:AddToggle('NoOxygenVignette', {
-    Text = "缺氧无暗边",
+Effect:AddToggle('NoOxygenVignette', {
+    Text = "无缺氧效果",
     Default = false
 })
 
@@ -1673,6 +1714,29 @@ Movement:AddSlider("SpeedBoostSlider", {
 
      end,      
 })
+
+local LadderSpeedSlider = Movement:AddSlider("LadderSpeedBoost", {
+    Text = "爬梯子速度",
+    Default = 0,
+    Min = 0,
+    Max = 50,
+    Rounding = 0,
+    Compact = true,
+Callback = function(Value)
+end,
+})
+
+local function updateLadderSpeedSlider()
+local isMinesFloor = Floor.Value == "Mines"
+LadderSpeedSlider:SetDisabled(not isMinesFloor)
+if not isMinesFloor then
+Options.LadderSpeedBoost:SetValue(0)
+end
+end
+updateLadderSpeedSlider()
+if Floor:IsA("StringValue") then
+table.insert(Connections, Floor.Changed:Connect(updateLadderSpeedSlider))
+end
 
 local MaxSlopeAngle = 45
 Movement:AddSlider("MaxSlopeAngleSlider", {
@@ -4067,6 +4131,20 @@ if room46 then
 performMinecartRename()
 end
 end
+
+FloorAnti:AddButton({
+Text = "禁用实体",
+DoubleClick = true,
+Risky = true,
+Func = function()
+task.spawn(function()
+for i = 1, 11 do
+game.ReplicatedStorage.RemotesFolder.RequestAsset:InvokeServer("Remote")
+task.wait(0.1)
+end
+end)
+end
+})
 end
 
 if Floor.Value == "Mines" then
@@ -5112,8 +5190,14 @@ if Toggles.AntiScreech.Value then
 
 local Screech = Modules:FindFirstChild("Screech") or Modules:FindFirstChild("_Screech")
 Screech.Name = "_Screech"
+end
 
-
+if Toggles.SpeedBoost.Value and Floor.Value == "Mines" then
+local currentSpeed = Speed
+if LocalPlayer.Character:GetAttribute("Climbing") then
+currentSpeed = currentSpeed + Options.LadderSpeedBoost.Value
+end
+LocalPlayer.Character.Humanoid.WalkSpeed = currentSpeed
 end
 
 if Toggles.AntiA90.Value then
@@ -5595,6 +5679,14 @@ end
 if Toggles.SpeedBoost.Value then
 
 Character.Humanoid.WalkSpeed = Speed
+end
+
+if Toggles.SpeedBoost.Value then
+    Character.Humanoid.WalkSpeed = Speed
+    
+if Floor.Value == "Mines" and LocalPlayer.Character:GetAttribute("Climbing") then
+Character.Humanoid.WalkSpeed = Speed + Options.LadderSpeedBoost.Value
+end
 end
 
 if Toggles.AutoCloset.Value then
@@ -6689,9 +6781,17 @@ end
 if ReplicatedStorage:FindFirstChild("SurgeRemote") then
 ReplicatedStorage.SurgeRemote.Parent = ReplicatedStorage.RemotesFolder
 end
+if VoidModule and VoidModule.originalStuff then
+VoidModule.stuff = VoidModule.originalStuff
+VoidModule.originalStuff = nil
+end
 local SpiderModule = ClientModules.EntityModules:FindFirstChild("_SpiderJumpscare")
 if SpiderModule then
 SpiderModule.Name = "SpiderJumpscare"
+end
+local GlitchModule = ClientModules.EntityModules:FindFirstChild("_Glitch")
+if GlitchModule then
+GlitchModule.Name = "Glitch"
 end
 if ClientModules.EntityModules:FindFirstChild("_Shade") then
 ClientModules.EntityModules:FindFirstChild("_Shade").Name = "Shade"
