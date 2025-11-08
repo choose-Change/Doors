@@ -146,7 +146,8 @@ local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/ms
 local ESPConfig = {
 Tracer = {
 Enabled = true,
-Position = "Bottom"
+Position = "Bottom",
+Thickness = 1.0
 },
 TextSize = 16,
 ShowDistance = true,
@@ -234,6 +235,7 @@ if model and model.Parent and espObject and espObject.CurrentSettings then
 espObject.CurrentSettings.TextSize = ESPConfig.TextSize
 espObject.CurrentSettings.Tracer.Enabled = ESPConfig.Tracer.Enabled
 espObject.CurrentSettings.Tracer.From = ESPConfig.Tracer.Position
+espObject.CurrentSettings.Tracer.Thickness = ESPConfig.Tracer.Thickness
 espObject.CurrentSettings.FillTransparency = ESPConfig.FillTransparency
 espObject.CurrentSettings.OutlineTransparency = ESPConfig.OutlineTransparency
 espObject.CurrentSettings.ESPType = ESPConfig.ESPType
@@ -247,22 +249,15 @@ end
 function RecreateAllESP()
 local espStates = {
 Door = Toggles.Door and Toggles.Door.Value,
-Key = Toggles.Key and Toggles.Key.Value,
 HidingSpot = Toggles.HidingSpot and Toggles.HidingSpot.Value,
-GateLever = Toggles.GateLever and Toggles.GateLever.Value,
 Players = Toggles.Players and Toggles.Players.Value,
-Books = Toggles.Books and Toggles.Books.Value,
-Breaker = Toggles.Breaker and Toggles.Breaker.Value,
 Items = Toggles.Items and Toggles.Items.Value,
 Gold = Toggles.Gold and Toggles.Gold.Value,
 EntitesESP = Toggles.EntitesESP and Toggles.EntitesESP.Value,
-TimerLever = Toggles.TimerLever and Toggles.TimerLever.Value,
-LeverESP = Toggles.LeverESP and Toggles.LeverESP.Value,
-Generator = Toggles.Generator and Toggles.Generator.Value,
 Ladder = Toggles.Ladder and Toggles.Ladder.Value,
-Fuse = Toggles.Fuse and Toggles.Fuse.Value,
-Anchor = Toggles.Anchor and Toggles.Anchor.Value,
-WaterPump = Toggles.WaterPump and Toggles.WaterPump.Value
+Chest = Toggles.Chest and Toggles.Chest.Value,
+Stardust = Toggles.Stardust and Toggles.Stardust.Value,
+TaskESP =  Toggles.TaskESP and Toggles.TaskESP.Value
 }
     
 for model, espObject in pairs(ESPObjects) do
@@ -695,11 +690,11 @@ LockSize = true,
 })
 
 local Contributors = Tabs.Info:AddLeftGroupbox("开发人员","user-round-check")
-Contributors:AddLabel("[千change] 所有者",true)
+Contributors:AddLabel("[<font color=\"rgb(0,255,0)\">千change</font>] 所有者",true)
 
 local TheScript = Tabs.Info:AddRightGroupbox("致谢","user-star")
-TheScript:AddLabel("[mstudio45] 提供UI库",true)
-TheScript:AddLabel("[mstudio45] 提供MSESP库",true)
+TheScript:AddLabel("[<font color=\"rgb(0,255,0)\">mstudio45</font>] 提供UI库",true)
+TheScript:AddLabel("[<font color=\"rgb(0,255,0)\">mstudio45</font>] 提供MSESP库",true)
 
 if Floor.Value == "Rooms" then
 
@@ -1830,6 +1825,19 @@ SettingsESP:AddSlider("TextSizeSlider", {
         ESPConfig.TextSize = Value
         UpdateAllESPConfig()
     end,
+})
+
+SettingsESP:AddSlider("TracerThicknessSlider", {
+    Text = "追踪线粗细",
+    Default = ESPConfig.Tracer.Thickness,
+    Min = 0.1,
+    Max = 5.0,
+    Rounding = 1,
+    Compact = true,
+    Callback = function(Value)
+        ESPConfig.Tracer.Thickness = Value
+        UpdateAllESPConfig()
+    end
 })
 
 SettingsESP:AddSlider("ESPFillTransparency", {
