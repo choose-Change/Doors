@@ -3967,96 +3967,93 @@ end)
 end
 
 if Floor.Value == "Mines" then
-    local autoAnchorRunning = false
-    local autoAnchorConnection = nil
+local autoAnchorRunning = false
+local autoAnchorConnection = nil
     
-    Automation:AddToggle('AutoAnchorSolver', {
-        Text = "自动密码机",
-        Default = false,
-        Callback = function(Value)
-            if Value then
-                autoAnchorRunning = true
-                
-                local function getMainUI()
-                    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-                    return playerGui:WaitForChild("MainUI")
-                end
-                
-                local function solveAnchor()
-                    if not autoAnchorRunning then return end
-                    
-                    local success, mainUI = pcall(getMainUI)
-                    if not success or not mainUI then
-                        return
-                    end
-                    
-                    local AnchorHintFrame = mainUI:FindFirstChild("AnchorHintFrame")
-                    if not AnchorHintFrame then
-                        return
-                    end
-                    
-                    local anchorSignText = AnchorHintFrame:FindFirstChild("AnchorCode")
-                    local currentCode = AnchorHintFrame:FindFirstChild("Code")
-                    
-                    if not anchorSignText or not currentCode then
-                        return
-                    end
-                    
-                    local signText = anchorSignText.Text
-                    local codeText = currentCode.Text
-                    
-                    if signText == "" or codeText == "" then
-                        return
-                    end
-                    
-                    local room50 = workspace.CurrentRooms:FindFirstChild("50")
-                    if not room50 then 
-                        for roomName, room in pairs(workspace.CurrentRooms:GetChildren()) do
-                            if tonumber(roomName) and tonumber(roomName) >= 50 then
-                                room50 = room
-                                break
-                            end
-                        end
-                        if not room50 then return end
-                    end
-                    
-                    for _, anchor in ipairs(room50:GetDescendants()) do
-                        if not autoAnchorRunning then break end
-                        if anchor.Name == "MinesAnchor" then
-                            local sign = anchor:FindFirstChild("Sign")
-                            if sign then
-                                local textLabel = sign:FindFirstChild("TextLabel")
-                                if textLabel and textLabel.Text == signText then
-                                    local anchorRemote = anchor:FindFirstChild("AnchorRemote")
-                                    if anchorRemote then
-                                        local success, err = pcall(function()
-                                            anchorRemote:InvokeServer(codeText)
-                                        end)
-                                        if not success then
-                                        end
-                                    end
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-                
-                autoAnchorConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                    if not autoAnchorRunning then return end
-                    solveAnchor()
-                end)
-                
-                
-            else
-                autoAnchorRunning = false
-                if autoAnchorConnection then
-                    autoAnchorConnection:Disconnect()
-                    autoAnchorConnection = nil
-                end
-            end
-        end
-    })
+Automation:AddToggle('AutoAnchorSolver', {
+    Text = "自动密码机",
+    Default = false,
+Callback = function(Value)
+if Value then
+autoAnchorRunning = true
+local function getMainUI()
+local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+return playerGui:WaitForChild("MainUI")
+end
+local function solveAnchor()
+if not autoAnchorRunning then return end
+local success, mainUI = pcall(getMainUI)
+if not success or not mainUI then
+return
+end
+local AnchorHintFrame = mainUI:FindFirstChild("AnchorHintFrame")
+if not AnchorHintFrame then
+return
+end
+local anchorSignText = AnchorHintFrame:FindFirstChild("AnchorCode")
+local currentCode = AnchorHintFrame:FindFirstChild("Code")
+if not anchorSignText or not currentCode then
+return
+end
+local signText = anchorSignText.Text
+local codeText = currentCode.Text
+if signText == "" or codeText == "" then
+return
+end
+local room50 = workspace.CurrentRooms:FindFirstChild("50")
+if not room50 then 
+for roomName, room in pairs(workspace.CurrentRooms:GetChildren()) do
+if tonumber(roomName) and tonumber(roomName) >= 50 then
+room50 = room
+break
+end
+end
+if not room50 then return end
+end
+for _, anchor in ipairs(room50:GetDescendants()) do
+if not autoAnchorRunning then break end
+if anchor.Name == "MinesAnchor" then
+local sign = anchor:FindFirstChild("Sign")
+if sign then
+local textLabel = sign:FindFirstChild("TextLabel")
+if textLabel and textLabel.Text == signText then
+local playerPosition = LocalPlayer.Character and 
+LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and 
+LocalPlayer.Character.HumanoidRootPart.Position
+local anchorPosition = anchor.PrimaryPart and anchor.PrimaryPart.Position or
+(anchor:FindFirstChildWhichIsA("BasePart") and anchor:FindFirstChildWhichIsA("BasePart").Position)
+if playerPosition and anchorPosition then
+local distance = (playerPosition - anchorPosition).Magnitude
+if distance < 12 then
+local anchorRemote = anchor:FindFirstChild("AnchorRemote")
+if anchorRemote then
+local success, err = pcall(function()
+anchorRemote:InvokeServer(codeText)
+end)
+if not success then
+end
+end
+break
+end
+end
+end
+end
+end
+end
+end
+autoAnchorConnection = game:GetService("RunService").Heartbeat:Connect(function()
+if not autoAnchorRunning then return end
+solveAnchor()
+end)
+else
+autoAnchorRunning = false
+if autoAnchorConnection then
+autoAnchorConnection:Disconnect()
+autoAnchorConnection = nil
+end
+end
+end
+})
 end
 
 if Floor.Value == "Mines" then
