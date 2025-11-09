@@ -645,6 +645,8 @@ local MiscBox = Tabs.Player:AddLeftGroupbox("杂项")
 
 local Anti = Tabs.Exploits:AddLeftGroupbox('实体')
 
+local Troll = Tabs.Exploits:AddLeftGroupbox('恶搞')
+
 Automation = Tabs.Player:AddRightGroupbox('自动化')
 Bypass = Tabs.Exploits:AddRightGroupbox('绕过')
 
@@ -860,6 +862,11 @@ end
 end
 
 end
+
+FloorAuto:AddToggle('AutoEatCandies', {
+    Text = "自动吃糖果",
+    Default = false,
+})
 
 ModifiersBox:AddButton({
 Text = "死亡农场",
@@ -3269,6 +3276,16 @@ end
 
 end)
 
+Troll:AddToggle("Spamtoolz", { 
+    Text = "滥用他人工具", 
+    Default = false, 
+}):AddKeyPicker("Spamtoolz_X", { 
+    Default = "S", 
+    SyncToggleState = false, 
+    Mode = "Toggle", 
+    Text = "滥用他人工具", 
+    NoUI = false, 
+})
 
 local SpeedBypassInterval = 0.216
 
@@ -5668,6 +5685,42 @@ end
 if espObject.GUI and espObject.GUI.Tracer then
 espObject:Hide()
 espObject:Show()
+end
+end
+end
+end
+
+if Toggles.AutoEatCandies.Value then
+local candyInBackpack = LocalPlayer.Backpack:FindFirstChild("Candy")
+if candyInBackpack and candyInBackpack:FindFirstChild("Remote") then
+candyInBackpack.Parent = LocalPlayer.Character
+end
+local candyInCharacter = LocalPlayer.Character:FindFirstChild("Candy")
+if candyInCharacter and candyInCharacter:FindFirstChild("Remote") then
+local isDeathCandy = candyInCharacter:GetAttribute("Tool_CandyID") == "CandyRed"
+if not isDeathCandy then
+candyInCharacter.Remote:FireServer()
+else
+end
+end
+end
+
+if Toggles.Spamtoolz and Toggles.Spamtoolz.Value and Options.Spamtoolz_X and Options.Spamtoolz_X:GetState() then
+task.wait()
+for _, Player in pairs(game.Players:GetPlayers()) do
+if Player ~= LocalPlayer and Player then
+if Player.Backpack then
+for _, v in pairs(Player.Backpack:GetChildren()) do
+if v.Name ~= "Candle" and v:FindFirstChildWhichIsA("RemoteEvent") then
+v:FindFirstChildWhichIsA("RemoteEvent"):FireServer()
+end
+end
+end
+if Player.Character then
+local Tool = Player.Character:FindFirstChildWhichIsA("Tool")
+if Tool and Tool.Name ~= "Candle" and Tool:FindFirstChild("Remote") then
+Tool.Remote:FireServer()
+end
 end
 end
 end
