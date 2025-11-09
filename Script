@@ -2577,6 +2577,14 @@ end
 })
 
 Automation:AddDivider()
+Automation:AddDropdown("BreakerBoxMode", {
+    Values = {"合法", "漏洞"},
+    Default = "合法",
+    Text = "断路器箱解法",
+Callback = function(Value)
+end
+})
+
 local Breaker = nil
 Automation:AddToggle('AutoBreakerBox',{
 Text = "自动断路器箱",
@@ -2592,11 +2600,16 @@ end
 while task.wait() do
 if not Toggles.AutoBreakerBox.Value then break end
 if Breaker then
+if Options.BreakerBoxMode and Options.BreakerBoxMode.Value == "漏洞" then
+local Event = game:GetService("ReplicatedStorage").RemotesFolder.EBF
+if Event then
+Event:FireServer()
+end
+else
 for _, v in ipairs(Breaker:GetChildren()) do
 if v.Name == "BreakerSwitch" then
 if v:GetAttribute("ID") == tonumber(Breaker:WaitForChild("SurfaceGui").Frame.Code.Text) then
 if  Breaker:WaitForChild("SurfaceGui").Frame.Code.Frame.BackgroundTransparency == 0  then
-
 v:SetAttribute("Enabled",true)
 if v:WaitForChild("Sound").Playing == false then
 v:WaitForChild("Sound",1e1).Playing = true
@@ -2605,13 +2618,13 @@ v.Material = Enum.Material.Neon
 v:WaitForChild("Light",1e1).Attachment.Spark:Emit(1)
 v:WaitForChild("PrismaticConstraint").TargetPosition = -0.2
 else
-
 v:SetAttribute("Enabled",false)
 if v:WaitForChild("Sound").Playing == false then
 v:WaitForChild("Sound",1e1).Playing = true
 end
 v:WaitForChild("PrismaticConstraint").TargetPosition = 0.2
 v.Material = Enum.Material.Glass
+end
 end
 end
 end
