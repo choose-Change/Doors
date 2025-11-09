@@ -1723,7 +1723,7 @@ Movement:AddSlider("SpeedBoostSlider", {
 })
 
 local LadderSpeedSlider = Movement:AddSlider("LadderSpeedBoost", {
-    Text = "爬梯子速度",
+    Text = "爬梯子加速",
     Default = 0,
     Min = 0,
     Max = 50,
@@ -3280,12 +3280,29 @@ Troll:AddToggle("Spamtoolz", {
     Text = "滥用他人工具", 
     Default = false, 
 }):AddKeyPicker("Spamtoolz_X", { 
-    Default = "S", 
+    Default = "X", 
     SyncToggleState = false, 
     Mode = "Toggle", 
     Text = "滥用他人工具", 
     NoUI = false, 
 })
+
+Troll:AddToggle("StunPlayer", {
+    Text = "眩晕",
+    Default = false,
+Callback = function(Value)
+if LocalPlayer.Character then
+LocalPlayer.Character:SetAttribute("Stunned", Value)
+end
+end
+})
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+task.wait(0.5)
+if Toggles.StunPlayer and Toggles.StunPlayer.Value then
+character:SetAttribute("Stunned", true)
+end
+end)
 
 local SpeedBypassInterval = 0.216
 
