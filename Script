@@ -580,7 +580,6 @@ local LatestRoom = ReplicatedStorage.GameData.LatestRoom.Value
 
 local Connections = {}
 
-
 Window = Library:CreateWindow({
 Title = '💠 Starring V3',
 Footer = "倒卖替我挡灾",
@@ -652,12 +651,9 @@ Bypass = Tabs.Exploits:AddRightGroupbox('绕过')
 
 local ReachBox = Tabs.Player:AddRightGroupbox('距离')
 
-
 FloorAnti = Tabs.Floor:AddLeftGroupbox('楼层绕过')
 
-
 ModifiersBox = Tabs.Floor:AddLeftGroupbox('修饰符')
-
 
 FloorAuto = Tabs.Floor:AddRightGroupbox('自动化')
 
@@ -688,11 +684,11 @@ LockSize = true,
 })
 
 local Contributors = Tabs.Info:AddLeftGroupbox("开发人员","user-round-check")
-Contributors:AddLabel("[<font color=\"rgb(0,255,0)\">千change</font>] 所有者",true)
+Contributors:AddLabel("[<font color=\"rgb(73,230,133)\">千change</font>] 所有者",true)
 
 local TheScript = Tabs.Info:AddRightGroupbox("致谢","user-star")
-TheScript:AddLabel("[<font color=\"rgb(0,255,0)\">mstudio45</font>] 提供UI库",true)
-TheScript:AddLabel("[<font color=\"rgb(0,255,0)\">mstudio45</font>] 提供MSESP库",true)
+TheScript:AddLabel("[<font color=\"rgb(73,230,133)\">mstudio45</font>] 提供UI库",true)
+TheScript:AddLabel("[<font color=\"rgb(73,230,133)\">mstudio45</font>] 提供MSESP库",true)
 
 if Floor.Value == "Rooms" then
 
