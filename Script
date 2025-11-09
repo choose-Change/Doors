@@ -4729,6 +4729,15 @@ end
 end
 end
 
+
+if Floor.Value == "Mines" and roomNumber == currentRoom then
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "MinesGateButton" then
+AddESP(v, "门按钮", TaskColor)
+end
+end
+end
+
 if Floor.Value == "Mines" then
 for _, pump in ipairs(room:GetDescendants()) do
 if pump.Name == "WaterPump" then
@@ -4751,7 +4760,7 @@ end
 if Floor.Value == "Garden" and roomNumber == currentRoom then
 for _, v in ipairs(room:GetDescendants()) do
 if v and v.Parent and v.Parent.Name == "VineGuillotine" and v.Name == "Lever" then
-AddESP(v,"户外拉杆",TaskColor)
+AddESP(v,"拉杆",TaskColor)
 end
 end
 end
@@ -4793,6 +4802,16 @@ if Floor.Value == "Mines" then
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
 if v.Name == "MinesAnchor" or v.Name == "GeneratorMain" or v.Name == "WaterPump" then
 ESPLibrary:RemoveESP(v)
+end
+end
+end
+
+if Floor.Value == "Mines" then
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, v in ipairs(room:GetDescendants()) do
+if v.Name == "MinesGateButton" then
+ESPLibrary:RemoveESP(v)
+end
 end
 end
 end
@@ -6718,7 +6737,7 @@ if (Floor.Value == "Garden") and Toggles.TaskESP.Value then
 
 if v and v.Parent and v.Parent.Name == "VineGuillotine" and v.Name == "Lever" then
 
-AddESP(v,"户外拉杆",TaskColor)
+AddESP(v,"拉杆",TaskColor)
 
 
 end
