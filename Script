@@ -50,7 +50,7 @@ print("Starring准备加载")
 
 return end
 
-if game:GetService("ReplicatedStorage"):FindFirstChild("RemotesFolder") or game.ReplicatedStorage:FindFirstChild("EntityInfo") or game.ReplicatedStorage:FindFirstChild("Bricks") then
+if game:GetService("ReplicatedStorage"):FindFirstChild("RemotesFolder") then
 
 repeat task.wait() until workspace.CurrentRooms:FindFirstChildOfClass("Model")
 
@@ -443,7 +443,7 @@ LocalPlayer:SetAttribute("StarringLoaded",true)
 Floor = ReplicatedStorage.GameData.Floor
 
 
-RemoteFolder = ReplicatedStorage:FindFirstChild("EntityInfo") or ReplicatedStorage:FindFirstChild("RemotesFolder") or ReplicatedStorage:FindFirstChild("Bricks")
+RemoteFolder = ReplicatedStorage:FindFirstChild("RemotesFolder")
 MainGame = LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game
 RequiredMainGame = require(LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
 RemoteListener = MainGame.RemoteListener
@@ -884,128 +884,6 @@ end
 end
 })
 
-if ReplicatedStorage:FindFirstChild("EntityInfo") or ReplicatedStorage:FindFirstChild("Bricks") then
-
-FloorAnti:AddToggle('AntiBanana',{
-Text = "防香蕉皮",
-Default = false,
-Callback = function(Value)
-for _, v in ipairs(workspace:GetChildren()) do
-if v.Name == "BananaPeel" then
-
-v.CanTouch =  not Value
-end
-end
-
-end
-})
-FloorAnti:AddToggle('AntiJeff',{
-Text = "防Jeff杀手",
-Default = false,
-Callback = function(Value)
-for _, v in ipairs(workspace:GetChildren()) do
-if v.Name == "JeffTheKiller" then
-
-for _, part in ipairs(v:GetChildren()) do
-if part:IsA("BasePart") then
-part.CanTouch = not Value
-end
-end
-end
-end
-
-end
-})
-
-workspace.ChildAdded:Connect(function(v)
-
-if v.Name == "BananaPeel" then
-
-v.CanTouch =  not Toggles.AntiBanana.Value 
-end
-if v.Name == "JeffTheKiller" then
-v.ChildAdded:Connect(function()
-for _, part in v:GetChildren() do
-if part:IsA("BasePart") then
-part.CanTouch = not Toggles.AntiJeff.Value 
-end
-end
-end)
-for _, part in v:GetChildren() do
-if part:IsA("BasePart") then
-part.CanTouch = not Toggles.AntiJeff.Value 
-end
-end
-
-end
-end)
-if ReplicatedStorage:FindFirstChild("EntityInfo") then 
-FloorAnti:AddToggle('DeleteFigureFools',{
-Text = "删除飞哥",
-Default = false,
-Disabled = Disable2
-})
-end
-if ReplicatedStorage:FindFirstChild("Bricks") or ReplicatedStorage:FindFirstChild("EntityInfo") then
-FloorAnti:AddToggle('Godmode',{
-Text = "GodMode",
-Default = false,
-Callback = function(Value)
-if Value then
-if not Toggles.Noclip.Value then
-Toggles.Noclip:SetValue(true)
-end
-
-LocalPlayer.Character.Collision.Position = LocalPlayer.Character.Collision.Position - Vector3.new(0, 11, 0)
-
-
-else
-
-LocalPlayer.Character.Collision.Position = LocalPlayer.Character.Collision.Position + Vector3.new(0, 11, 0)
-
-
-
-end
-end
-})
-
-FloorAnti:AddToggle('FigureGodmode',{
-Text = "飞哥上帝模式",
-Default = false,
-Callback = function(Value)
-
-end
-})
-
-
-
-end
-
-
-FloorAnti:AddToggle('DeleteSeek',{
-Text = "删除Seek",
-Default = false
-})
-task.spawn(function()
-while task.wait(0.09) do
-if Toggles.DeleteSeek.Value then
-local SeekCollision = workspace:FindFirstChild("TriggerEventCollision",true)
-local Trigger = workspace:FindFirstChild("TriggerSeek",true)
-
-if Trigger then
-Trigger:Destroy()
-end
-if SeekCollision then
-SeekCollision:ClearAllChildren()
-end
-
-end
-
-end
-end)
-
-
-end
 ModifiersBox:AddDivider()
 
 SettingsBox:AddToggle('FpsUnlocker',{
@@ -3561,50 +3439,60 @@ Bypass:AddDropdown("GMDropdown", {
         
 })
 
-Bypass:AddToggle('GodMode',{
-     Text = "上帝模式",
-     Default = false,
-     Callback = function(Value)
+local GodModeCameraHandler = {enabled = false}
+local function GodModeCameraStep()
+if not GodModeCameraHandler.enabled then return end
+local cam = workspace.CurrentCamera
+local char = LocalPlayer.Character
+if not cam or not char or not char:FindFirstChild("HumanoidRootPart") then return end
+local currentCF = cam.CFrame
+local newPosition = Vector3.new(
+currentCF.Position.X,
+currentCF.Position.Y + 2.45,
+currentCF.Position.Z
+)
+cam.CFrame = CFrame.new(newPosition, currentCF.Position + currentCF.LookVector * 10)
+end
+pcall(function() RunService:UnbindFromRenderStep("GOD_MODE_CAMERA_SYS") end)
+RunService:BindToRenderStep("GOD_MODE_CAMERA_SYS", Enum.RenderPriority.Camera.Value+2, GodModeCameraStep)
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+if GodModeCameraHandler.enabled then
+GodModeCameraHandler.enabled = false
+task.wait(0.1)
+GodModeCameraHandler.enabled = true
+end
+end)
 
+Bypass:AddToggle('GodMode',{
+Text = "上帝模式",
+Default = false,
+Callback = function(Value)
 if Value then
 if not Toggles.AntiHear.Value then
 Toggles.AntiHear:SetValue(true)
 Library:Notify("自动开启防飞哥听力功能只有这样上帝模式才能工作",3)
 end
-
-
-
 Character.Collision.Size = Vector3.new(1, 0.001, 5)
-
 Character.Humanoid.HipHeight = 0.0001
-
+GodModeCameraHandler.enabled = true
 else
 LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
 Character.Collision.Size = Vector3.new(5.5, 3, 5)
-
 Character.Humanoid.HipHeight = 2.4
-
-
-
+GodModeCameraHandler.enabled = false
 end
-
-
-
 end
 }):AddKeyPicker('GodmodeKeybind', {
-
-
-		Default = 'G', 
-		SyncToggleState = true,
-		Mode = 'Toggle',
-		Text = '上帝模式',
-		NoUI = false,
-		Callback = function(Value)
-		end,
-		ChangedCallback = function(New)
-		end
-	})
-
+    Default = 'G', 
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = '上帝模式',
+    NoUI = false,
+    Callback = function(Value)
+    end,
+    ChangedCallback = function(New)
+    end
+})
 
 Bypass:AddDropdown("AnticheatManipulationMode", {
     Values = {"瞬移", "坐标", "移动"},
@@ -6853,6 +6741,8 @@ end
 Library:Unload()
 ESPLibrary:Unload()
 
+GodModeCameraHandler.enabled = false
+pcall(function() RunService:UnbindFromRenderStep("GOD_MODE_CAMERA_SYS") end)
 
 if Character.HumanoidRootPart:FindFirstChild("FlyBodyVelocity") then
 
