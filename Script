@@ -1032,7 +1032,7 @@ Effect:AddToggle('NoCutscenes',{
 })
 
 Effect:AddToggle('AntiSpider',{
-     Text = "无蜘蛛突脸",
+     Text = "无蜘蛛跳脸",
      Default = false,
 Callback = function(Value)
 local SpiderModule = ClientModules.EntityModules:FindFirstChild("SpiderJumpscare") or ClientModules.EntityModules:FindFirstChild("_SpiderJumpscare")
@@ -1043,7 +1043,7 @@ end
 })
 
 Effect:AddToggle('AntiGlitch',{
-     Text = "无故障跳吓",
+     Text = "无故障跳脸",
      Default = false,
      Callback = function(Value)
 local GlitchModule = ClientModules.EntityModules:FindFirstChild("Glitch") or ClientModules.EntityModules:FindFirstChild("_Glitch")
@@ -1071,7 +1071,7 @@ end)
 end
 
 Effect:AddToggle('AntiVoid',{
-     Text = "无虚空跳吓",
+     Text = "无虚空跳脸",
      Default = false,
 Callback = function(Value)
 if VoidModule then
@@ -3787,7 +3787,7 @@ local clones = {}
 			local clone = barrier:Clone()
 			clone.Name = "AntiBridge"
 			clone.Size = Vector3.new(barrier.Size.X, barrier.Size.Y, 30)
-			clone.Color = Color3.new(0,0,0.5)
+			clone.Color = Color3.new(1,1,1)
 			clone.CFrame = barrier.CFrame * CFrame.new(0, 0, -5)
 			clone.Transparency = 0
 			clone.Anchored = true
