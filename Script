@@ -2238,7 +2238,6 @@ hasteClockUI.Name = "HasteClockUI"
 hasteClockUI.Parent = game:GetService("CoreGui")
 hasteClockUI.ResetOnSpawn = false
 hasteClockUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 150, 0, 45)
 frame.Position = UDim2.new(0.5, 100, 0.8, -30)
@@ -2247,11 +2246,9 @@ frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.BackgroundTransparency = 0.3
 frame.Parent = hasteClockUI
-
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 8)
 corner.Parent = frame
-
 local textLabel = Instance.new("TextLabel")
 textLabel.Size = UDim2.new(1, 0, 1, 0)
 textLabel.BackgroundTransparency = 1
@@ -2260,54 +2257,57 @@ textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 textLabel.TextSize = 18
 textLabel.Font = Enum.Font.Gotham
 textLabel.Parent = frame
-
 hasteClockUI.Enabled = false
 end
-
+local function getCurrentRoomTimer()
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+if not localPlayer then return nil end
+local currentRoom = localPlayer:GetAttribute("CurrentRoom")
+if not currentRoom then return nil end
+local roomKey = tostring(currentRoom)
+local currentRooms = workspace:FindFirstChild("CurrentRooms")
+if not currentRooms then return nil end
+local room = currentRooms:FindFirstChild(roomKey)
+if not room then return nil end
+local door = room:FindFirstChild("Door")
+if not door then return nil end
+local displayTimer = door:FindFirstChild("DisplayTimer")
+if displayTimer and displayTimer:FindFirstChild("Text") then
+local textObj = displayTimer.Text
+if textObj and textObj.Text and textObj.Text ~= "" then
+return textObj.Text
+end
+end
+local doorModel = door:FindFirstChild("Door")
+if doorModel then
+local backdoorDisplayPlate = doorModel:FindFirstChild("BackdoorDisplayPlate")
+if backdoorDisplayPlate then
+displayTimer = backdoorDisplayPlate:FindFirstChild("DisplayTimer")
+if displayTimer and displayTimer:FindFirstChild("Text") then
+local textObj = displayTimer.Text
+if textObj and textObj.Text and textObj.Text ~= "" then
+return textObj.Text
+end
+end
+end
+end
+return nil
+end
 local function updateTimerDisplay(timerText)
 if hasteClockUI and hasteClockUI:FindFirstChildOfClass("Frame") then
 local frame = hasteClockUI:FindFirstChildOfClass("Frame")
 local textLabel = frame:FindFirstChildOfClass("TextLabel")
-
 if textLabel then
 textLabel.Text = "倒计时: " .. timerText
 end
 end
 end
-
-local function getCurrentRoomTimer()
-local Players = game:GetService("Players")
-local localPlayer = Players.LocalPlayer
-
-if not localPlayer then return nil end
-
-local currentRoom = localPlayer:GetAttribute("CurrentRoom")
-if not currentRoom then return nil end
-
-local roomKey = tostring(currentRoom)
-local currentRooms = workspace:FindFirstChild("CurrentRooms")
-
-if not currentRooms then return nil end
-
-local room = currentRooms:FindFirstChild(roomKey)
-if not room then return nil end
-
-local door = room:FindFirstChild("Door")
-if not door then return nil end
-
-local displayTimer = door:FindFirstChild("DisplayTimer")
-if not displayTimer then return nil end
-
-return displayTimer.Text.Text
-end
-
 hasteClockConnection = game:GetService("RunService").Heartbeat:Connect(function()
 if not Toggles.HasteClock.Value then
 return
 end
-
 local timerText = getCurrentRoomTimer()
-
 if timerText and timerText ~= "" and timerText ~= "..." then
 hasteClockUI.Enabled = true
 updateTimerDisplay(timerText)
@@ -2315,16 +2315,12 @@ else
 hasteClockUI.Enabled = false
 end
 end)
-
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
-
 hasteClockRoomConnection = localPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
 if not Toggles.HasteClock.Value then return end
-
 hasteClockUI.Enabled = true
 updateTimerDisplay("...")
-
 task.delay(2, function()
 if Toggles.HasteClock.Value then
 local timerText = getCurrentRoomTimer()
@@ -2334,18 +2330,15 @@ end
 end
 end)
 end)
-
 else
 if hasteClockConnection then
 hasteClockConnection:Disconnect()
 hasteClockConnection = nil
 end
-
 if hasteClockRoomConnection then
 hasteClockRoomConnection:Disconnect()
 hasteClockRoomConnection = nil
 end
-
 if hasteClockUI then
 hasteClockUI.Enabled = false
 end
