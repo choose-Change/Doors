@@ -582,7 +582,7 @@ local Connections = {}
 
 Window = Library:CreateWindow({
 Title = '💠 Starring V3',
-Footer = "倒卖替我挡灾",
+Footer = "你们这群臭开脚本的😡😡😡",
 Center = true,
 AutoShow = true
 })
@@ -3113,19 +3113,7 @@ end
 
 end
 })
- 
 
-Anti:AddToggle('AntiHear',{
-     Text = "防飞哥听力",
-     Default = false
-})
-Toggles.AntiHear:OnChanged(function(Value)
-
-if not Value then
-RemoteFolder.Crouch:FireServer(false)
-end
-
-end)
 Anti:AddToggle('AntiHalt',{
      Text = "防 Halt",
      Default = false,
@@ -3136,6 +3124,15 @@ Halt.Name = Value and "_Shade" or "Shade"
 end
 })
 
+Anti:AddToggle('AntiHear',{
+     Text = "防飞哥听力",
+     Default = false
+})
+Toggles.AntiHear:OnChanged(function(Value)
+if not Value then
+RemoteFolder.Crouch:FireServer(false)
+end
+end)
 
 local nothitted = false
 
@@ -4355,6 +4352,17 @@ end
 end
 end
 end 
+})
+
+ModifiersBox:AddToggle('AntiSeekFlood',{
+     Text = "防 Seek 洪水",
+     Default = false,
+Callback = function(Value)
+local SeekSlopRemote = game:GetService("ReplicatedStorage").RemotesFolder:FindFirstChild("SeekSlop")
+if SeekSlopRemote then
+SeekSlopRemote.Name = Value and "_SeekSlop" or "SeekSlop"
+end
+end
 })
 
 local function isPlayerOwnedItem(instance)
