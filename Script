@@ -714,7 +714,7 @@ end
 
 function moveto(target)
 local path = PathfindingService:CreatePath({
-AgentRadius = 2,
+AgentRadius = 2.3,
 AgentHeight = 0.1,
 AgentCanClimb = true,
 
