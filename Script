@@ -587,7 +587,7 @@ local Connections = {}
 
 Window = Library:CreateWindow({
 Title = '💠 Starring V3',
-Footer = "你们这群臭开脚本的😡😡😡",
+Footer = "QQ群1070767561",
 Center = true,
 AutoShow = true
 })
@@ -678,7 +678,7 @@ ESP = TabBox:AddTab('ESP')
 SettingsESP = TabBox:AddTab('设置')
 ClosetTran = Tabs.Visuals:AddLeftGroupbox('透明度')
 
-SettingsBox = Tabs.UISettings:AddRightGroupbox('UI','wrench')
+SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Addons:UpdateWarningBox({
 Title = "警告",
@@ -1443,7 +1443,7 @@ Lookman = "Lookman",
 Blitz = "Blitz",
 Monument = "Monument",
 Groundskeeper = "Groundskeeper",
-Seek = "Seek"
+Seek = "Seek发射器"
 }
 
 local entityModelMap = {
@@ -5189,90 +5189,55 @@ Toggles.EntityNotifys:OnChanged(function(Value)
 if Value then
 for _, v in ipairs(workspace:GetChildren()) do
 if v.Name == "RushMoving" and Options.EntitiesPicker.Value["Rush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Rush 已生成",
-Time = 3,
-})
+Notify("Rush 已生成",3)
 Sound()
 end
 if v.Name == "BackdoorRush" and Options.EntitiesPicker.Value["Blitz"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Blitz 已生成",
-Time = 3,
-})
+Notify("Blitz 已生成",3)
+Sound()
+end
+
+if v.Name == "BackdoorLookman" and Options.EntitiesPicker.Value["Lookman"] then
+Notify("Lookman 已生成", 3)
 Sound()
 end
 
 if v.Name == "AmbushMoving" and Options.EntitiesPicker.Value["Ambush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Ambush 已生成",
-Time = 3,
-})
+Notify("Ambush 已生成",3)
 Sound()
 end
 
 if v.Name == "A60" and Options.EntitiesPicker.Value["A-60"] then
-Library:Notify({
-Title = "通知实体",
-Description = "A-60 已生成",
-Time = 3,
-})
+Notify("A-60 已生成",3)
 Sound()
 end
 
 if v.Name == "A120" and Options.EntitiesPicker.Value["A-120"] then
-Library:Notify({
-Title = "通知实体",
-Description = "A-120 已生成",
-Time = 3,
-})
+Notify("A-120 已生成",3)
 Sound()
 end
 
 if v.Name == "Eyes" and Options.EntitiesPicker.Value["Eyes"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Eyes 已生成",
-Time = 3,
-})
+Notify("Eyes 已生成",3)
 Sound()
 end
 
 if v.Name == "GlitchRush" and Options.EntitiesPicker.Value["GlitchRush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "GlitchRush 已生成",
-Time = 3,
-})
+Notify("GlitchRush 已生成",3)
 Sound()
 end
 if v.Name == "GlitchAmbush" and Options.EntitiesPicker.Value["GlitchAmbush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "'GlitchAmbush 已生成",
-Time = 3,
-})
+Notify("GlitchAmbush 已生成",3)
 Sound()
 end
 
 if v.Name == "Groundskeeper" and Options.EntitiesPicker.Value["Groundskeeper"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Groundskeeper 已生成",
-Time = 3,
-})
+Notify("Groundskeeper 已生成",3)
 Sound()
 end
 
 if v.Name == "MonumentEntity" and Options.EntitiesPicker.Value["Monument"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Monuemt 已生成",
-Time = 3,
-})
+Notify("Monument 已生成",3)
 Sound()
 end
 
@@ -5317,99 +5282,60 @@ end)
 table.insert(Connections,workspace.ChildAdded:Connect(function(v)
 if  Toggles.EntityNotifys.Value then  
 if v.Name == "RushMoving" and Options.EntitiesPicker.Value["Rush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Rush 已生成",
-Time = 3,
-})
+Notify("Rush 已生成",3)
 Sound()
 end
 if v.Name == "BackdoorRush" and Options.EntitiesPicker.Value["Blitz"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Blitz 已生成",
-Time = 3,
-})
+Notify("Blitz 已生成",3)
+Sound()
+end
+
+if v.Name == "BackdoorLookman" and Options.EntitiesPicker.Value["Lookman"] then
+Notify("Lookman 已生成", 3)
 Sound()
 end
 
 if v.Name == "AmbushMoving" and Options.EntitiesPicker.Value["Ambush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Ambush 已生成",
-Time = 3,
-})
+Notify("Ambush 已生成",3)
 Sound()
 end
 
 if v.Name == "A60" and Options.EntitiesPicker.Value["A-60"] then
-Library:Notify({
-Title = "通知实体",
-Description = "A-60 已生成",
-Time = 3,
-})
+Notify("A-60 已生成",3)
 Sound()
 end
 
 if v.Name == "A120" and Options.EntitiesPicker.Value["A-120"] then
-Library:Notify({
-Title = "通知实体",
-Description = "A-120 已生成",
-Time = 3,
-})
+Notify("A-120 已生成",3)
 Sound()
 end
 
 if v.Name == "Eyes" and Options.EntitiesPicker.Value["Eyes"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Eyes 已生成",
-Time = 3,
-})
+Notify("Eyes 已生成",3)
 Sound()
 end
 
 if v.Name == "GlitchRush" and Options.EntitiesPicker.Value["GlitchRush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "GlitchRush 已生成",
-Time = 3,
-})
+Notify("GlitchRush 已生成",3)
 Sound()
 end
 if v.Name == "GlitchAmbush" and Options.EntitiesPicker.Value["GlitchAmbush"] then
-Library:Notify({
-Title = "通知实体",
-Description = "GlitchAmbush 已生成",
-Time = 3,
-})
+Notify("GlitchAmbush 已生成",3)
 Sound()
 end
 
 if v.Name == "Groundskeeper" and Options.EntitiesPicker.Value["Groundskeeper"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Groundskeeper 已生成",
-Time = 3,
-})
+Notify("Groudskeeper 已生成",3)
 Sound()
 end
 
 if v.Name == "MonumentEntity" and Options.EntitiesPicker.Value["Monument"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Monument 已生成",
-Time = 3,
-})
+Notify("Monument 已生成",3)
 Sound()
 end
 
 if v.Name == "SeekMovingNewClone" and Options.EntitiesPicker.Value["Seek"] then
-Library:Notify({
-Title = "通知实体",
-Description = "Seek发射器 已生成",
-Time = 3,
-})
+Notify("Seek发射器 已生成",3)
 Sound()
 end
 
