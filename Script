@@ -72,6 +72,11 @@ end
 local Executor = identifyexecutor() or getexecutorname() or "Unknown"
 local Library = loadstring(game:HttpGet(repo..'Library.lua'))()
 
+if KEY ~= "FREE_群1070767561" then
+Library:Notify("卡密错误，获取卡密加入QQ群<font color=\"rgb(135,206,250)\">1070767561</font>", 20)
+return
+end
+
 Library.ForceCheckbox = true
 
 Library:Notify("正在加载Starring | Doors",5)
