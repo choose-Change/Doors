@@ -46,7 +46,7 @@ return Clas
 end
 
 if LocalPlayer:GetAttribute("StarringLoaded") then 
-print("Starring准备加载")
+print("StarRing准备加载")
 
 return end
 
@@ -79,7 +79,7 @@ end
 
 Library.ForceCheckbox = true
 
-Library:Notify("正在加载Starring | Doors",5)
+Library:Notify("正在加载 StarRing | Doors",5)
 
 if Executor == "Xeno" or Executor == "xeno" then Library:Notify("注入器不支持启动",3) return end
 
@@ -586,7 +586,7 @@ local LatestRoom = ReplicatedStorage.GameData.LatestRoom.Value
 local Connections = {}
 
 Window = Library:CreateWindow({
-Title = '💠 Starring V3',
+Title = '💠 StarRing V3',
 Footer = "QQ群1070767561",
 Center = true,
 AutoShow = true
