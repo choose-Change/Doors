@@ -714,12 +714,12 @@ end
 
 function moveto(target)
 local path = PathfindingService:CreatePath({
-AgentRadius = 2.3,
+AgentRadius = 0.6,
 AgentHeight = 0.1,
 AgentCanClimb = true,
 
 AgentCanJump = true,
-WaypointSpacing = 4.5
+WaypointSpacing = 3
 })
 
 path:ComputeAsync(LocalPlayer.Character.HumanoidRootPart.Position, target.Position)
