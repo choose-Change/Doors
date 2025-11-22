@@ -696,102 +696,144 @@ TheScript:AddLabel("[<font color=\"rgb(73,230,133)\">mstudio45</font>] 提供UI�
 TheScript:AddLabel("[<font color=\"rgb(73,230,133)\">mstudio45</font>] 提供MSESP库",true)
 
 if Floor.Value == "Rooms" then
-
-function addpart(position)
-
-local Part = Instance.new("Part",workspace:FindFirstChild("Path Node"))
-Part.Name = "Waypoint"
-Part.Size = Vector3.new(0.3, 0.3, 0.3)
-Part.Position = position
-Part.Anchored = true
-Part.CanCollide = false
-Part.Color = Color3.new(0, 1, 0)
-
-
-
+function getLocker()
+local Closest
+for i,v in pairs(workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "Rooms_Locker" then
+if v:FindFirstChild("Door") and v:FindFirstChild("HiddenPlayer") then
+if v.HiddenPlayer.Value == nil then
+if v.Door.Position.Y > -3 then
+if Closest == nil then
+Closest = v.Door
+else
+if (LocalPlayer.Character.HumanoidRootPart.Position - v.Door.Position).Magnitude < (Closest.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude then
+Closest = v.Door
 end
-
-
-function moveto(target)
-local path = PathfindingService:CreatePath({
-AgentRadius = 0.6,
-AgentHeight = 0.1,
-AgentCanClimb = true,
-
-AgentCanJump = true,
-WaypointSpacing = 3
-})
-
-path:ComputeAsync(LocalPlayer.Character.HumanoidRootPart.Position, target.Position)
-if path.Status == Enum.PathStatus.Success  then
-
-for _, waypoint in ipairs(path:GetWaypoints()) do
-
-LocalPlayer.Character.Humanoid:MoveTo(waypoint.Position)
-
-LocalPlayer.Character.Humanoid.MoveToFinished:Wait()
-
 end
-
 end
-
-
 end
-
-
-function moveto(target)
-
- local activepath = PathfindingService:CreatePath({
-AgentRadius = 2,
-AgentHeight = 0.1,
-AgentCanClimb = false,
-
-AgentCanJump = false,
-WaypointSpacing = 5 
-})
-
-activepath:ComputeAsync(LocalPlayer.Character.HumanoidRootPart.Position, target.Position)
-if activepath.Status == Enum.PathStatus.Success  then
-
-for _, waypoint in ipairs(activepath:GetWaypoints()) do
-
-LocalPlayer.Character.Humanoid:MoveTo(waypoint.Position)
-
-LocalPlayer.Character.Humanoid.MoveToFinished:Wait()
-
- 
-
-
 end
-
-
-
 end
-
-
 end
-
-
+return Closest
+end
+function getPath()
+local Part
+local Entity = workspace:FindFirstChild("A60") or workspace:FindFirstChild("A120")
+if Entity and Entity.Main.Position.Y > -4 then
+Part = getLocker()
+else
+Part = workspace.CurrentRooms[ReplicatedStorage.GameData.LatestRoom.Value].Door.Door
+end
+return Part
+end
 FloorAnti:AddToggle('AutoRooms',{
 Text = "自动房间",
 Default = false
 })
-FloorAnti:AddLabel('建议速度40-45，不要开启穿墙',true)
-
-
-
+FloorAnti:AddLabel('不要开启穿墙',true)
 Toggles.AutoRooms:OnChanged(function(Value)
-
-
-if not Value then
-LocalPlayer.Character.Humanoid:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position)
-
-
+if Value then
+LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.Scriptable
+if not workspace:FindFirstChild("PathFindPartsFolder") then
+local Folder = Instance.new("Folder")
+Folder.Parent = workspace
+Folder.Name = "PathFindPartsFolder"
 end
-
+if LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Modules:FindFirstChild("A90") then
+LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Modules.A90.Name = "lol"
+end
+task.spawn(function()
+while Toggles.AutoRooms.Value and not Library.Unloaded do
+local Destination = getPath()
+if Destination and ReplicatedStorage.GameData.LatestRoom.Value ~= 1000 then
+local path = PathfindingService:CreatePath({ WaypointSpacing = 2, AgentRadius = 0.6, AgentCanJump = false })
+path:ComputeAsync(LocalPlayer.Character.HumanoidRootPart.Position - Vector3.new(0,2.5,0), Destination.Position)
+local Waypoints = path:GetWaypoints()
+if path.Status ~= Enum.PathStatus.NoPath then
+if workspace:FindFirstChild("PathFindPartsFolder") then
+workspace.PathFindPartsFolder:ClearAllChildren()
+end
+for _, Waypoint in pairs(Waypoints) do
+local part = Instance.new("Part")
+part.Size = Vector3.new(1,1,1)
+part.Position = Waypoint.Position
+part.Shape = "Cylinder"
+part.Rotation = Vector3.new(0,0,90)
+part.Material = "SmoothPlastic"
+part.Anchored = true
+part.CanCollide = false
+if workspace:FindFirstChild("PathFindPartsFolder") then
+part.Parent = workspace.PathFindPartsFolder
+end
+end
+for _, Waypoint in pairs(Waypoints) do
+if not Toggles.AutoRooms.Value or Library.Unloaded then break end
+if LocalPlayer.Character.HumanoidRootPart.Anchored == false then
+LocalPlayer.Character.Humanoid:MoveTo(Waypoint.Position)
+LocalPlayer.Character.Humanoid.MoveToFinished:Wait()
+end
+end
+end
+end
+task.wait()
+end
+end)
+local renderConnection = RunService.RenderStepped:Connect(function()
+if not Toggles.AutoRooms.Value or Library.Unloaded then return end
+LocalPlayer.Character.HumanoidRootPart.CanCollide = false
+LocalPlayer.Character.Collision.CanCollide = false
+LocalPlayer.Character.Collision.CustomPhysicalProperties = PhysicalProperties.new(9e9,9e9,9e9)
+if Toggles.SpeedBoost and Toggles.SpeedBoost.Value then
+LocalPlayer.Character.Humanoid.WalkSpeed = Speed
+else
+LocalPlayer.Character.Humanoid.WalkSpeed = 16
+end
+local Path = getPath()
+local Entity = workspace:FindFirstChild("A60") or workspace:FindFirstChild("A120")
+if Entity then
+if Path then
+if Path.Parent.Name == "Rooms_Locker" then
+if Entity.Main.Position.Y > -4 then
+if (LocalPlayer.Character.HumanoidRootPart.Position - Path.Position).Magnitude < 5 then
+if LocalPlayer.Character.HumanoidRootPart.Anchored == false then
+fireproximityprompt(Path.Parent.HidePrompt)
+end
+end
+end
+end
+end
+if Entity.Main.Position.Y < -4 then
+if LocalPlayer.Character.HumanoidRootPart.Anchored == true then
+RemoteFolder.CamLock:FireServer()
+end
+end
+else
+if LocalPlayer.Character.HumanoidRootPart.Anchored == true then
+RemoteFolder.CamLock:FireServer()
+end
+end
+end)
+local roomConnection = ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
+if not Toggles.AutoRooms.Value or Library.Unloaded then return end
+if ReplicatedStorage.GameData.LatestRoom.Value == 1000 then
+LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.KeyboardMouse
+if workspace:FindFirstChild("PathFindPartsFolder") then
+workspace.PathFindPartsFolder:ClearAllChildren()
+end
+end
+end)
+table.insert(Connections, renderConnection)
+table.insert(Connections, roomConnection)
+else
+LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.KeyboardMouse
+if workspace:FindFirstChild("PathFindPartsFolder") then
+workspace.PathFindPartsFolder:ClearAllChildren()
+end
+LocalPlayer.Character.Humanoid:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position)
+end
 end)
 FloorAnti:AddDivider()
-
 end
 
 if Floor.Value == "Hotel" and ReplicatedStorage:FindFirstChild("RemotesFolder") then
