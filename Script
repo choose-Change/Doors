@@ -1461,7 +1461,7 @@ Camera:AddToggle('SpectateEntity',{
 })
 
 NotifyBox:AddDropdown("EntitiesPicker", {
-        Values = { "Rush","Ambush","A-60","A-120","Bramble","Grumble","Eyes","Lookman","Blitz","Figure","GlitchRush","GlitchAmbush","Monument","Groundskeeper","Seek"},
+        Values = { "Rush","Ambush","A-60","A-120","Eyes","Lookman","Blitz","GlitchRush","GlitchAmbush","Monument","Groundskeeper","Seek"},
         Default = 1,
         Multi = true,
 
