@@ -767,17 +767,11 @@ Part = workspace.CurrentRooms[ReplicatedStorage.GameData.LatestRoom.Value].Door.
 end
 return Part
 end
-FloorAnti:AddToggle('AutoRooms',{
-Text = "自动房间",
-Default = false
-})
-FloorAnti:AddLabel('不要开启穿墙',true)
-local autoRoomsLastPosition = nil
-local autoRoomsStuckStartTime = nil
-local autoRoomsStuckThreshold = 2
-local autoRoomsRestarting = false
-Toggles.AutoRooms:OnChanged(function(Value)
-if Value then
+local autoRoomsRunning = false
+local autoRoomsThread = nil
+local function startAutoRooms()
+if autoRoomsRunning then return end
+autoRoomsRunning = true
 LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.Scriptable
 if not workspace:FindFirstChild("PathFindPartsFolder") then
 local Folder = Instance.new("Folder")
@@ -787,11 +781,8 @@ end
 if LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Modules:FindFirstChild("A90") then
 LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Modules.A90.Name = "lol"
 end
-autoRoomsLastPosition = LocalPlayer.Character.HumanoidRootPart.Position
-autoRoomsStuckStartTime = nil
-autoRoomsRestarting = false
-task.spawn(function()
-while Toggles.AutoRooms.Value and not Library.Unloaded do
+autoRoomsThread = task.spawn(function()
+while Toggles.AutoRooms.Value and not Library.Unloaded and autoRoomsRunning do
 local Destination = getPath()
 if Destination and ReplicatedStorage.GameData.LatestRoom.Value ~= 1000 then
 local path = PathfindingService:CreatePath({ WaypointSpacing = 1, AgentRadius = 1.5, AgentCanJump = false })
@@ -815,7 +806,7 @@ part.Parent = workspace.PathFindPartsFolder
 end
 end
 for _, Waypoint in pairs(Waypoints) do
-if not Toggles.AutoRooms.Value or Library.Unloaded then break end
+if not Toggles.AutoRooms.Value or Library.Unloaded or not autoRoomsRunning then break end
 if LocalPlayer.Character.HumanoidRootPart.Anchored == false then
 LocalPlayer.Character.Humanoid:MoveTo(Waypoint.Position)
 LocalPlayer.Character.Humanoid.MoveToFinished:Wait()
@@ -826,8 +817,44 @@ end
 task.wait()
 end
 end)
+end
+local function stopAutoRooms()
+autoRoomsRunning = false
+if autoRoomsThread then
+task.cancel(autoRoomsThread)
+autoRoomsThread = nil
+end
+LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.KeyboardMouse
+if workspace:FindFirstChild("PathFindPartsFolder") then
+workspace.PathFindPartsFolder:ClearAllChildren()
+end
+LocalPlayer.Character.Humanoid:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position)
+end
+local function restartAutoRooms()
+if Toggles.AutoRooms.Value then
+Library:Notify("自动房间[DEBUG] 规划路线中...", 3)
+stopAutoRooms()
+task.wait(0.1)
+startAutoRooms()
+end
+end
+FloorAnti:AddToggle('AutoRooms',{
+Text = "自动房间",
+Default = false
+})
+FloorAnti:AddLabel('不要开启穿墙',true)
+local autoRoomsLastPosition = nil
+local autoRoomsStuckStartTime = nil
+local autoRoomsStuckThreshold = 2
+Toggles.AutoRooms:OnChanged(function(Value)
+if Value then
+startAutoRooms()
+else
+stopAutoRooms()
+end
+end)
 local stuckCheckConnection = RunService.Heartbeat:Connect(function()
-if not Toggles.AutoRooms.Value or Library.Unloaded or autoRoomsRestarting then return end
+if not Toggles.AutoRooms.Value or Library.Unloaded or not autoRoomsRunning then return end
 local currentPosition = LocalPlayer.Character.HumanoidRootPart.Position
 if autoRoomsLastPosition then
 local distanceMoved = (currentPosition - autoRoomsLastPosition).Magnitude
@@ -837,13 +864,8 @@ autoRoomsStuckStartTime = tick()
 else
 local stuckDuration = tick() - autoRoomsStuckStartTime
 if stuckDuration >= autoRoomsStuckThreshold then
-autoRoomsRestarting = true
-Library:Notify("自动房间[DEBUG] 规划路线中...", 3)
-Toggles.AutoRooms:SetValue(false)
-task.wait(0.1)
-Toggles.AutoRooms:SetValue(true)
+restartAutoRooms()
 autoRoomsStuckStartTime = nil
-autoRoomsRestarting = false
 end
 end
 else
@@ -890,26 +912,12 @@ end)
 local roomConnection = ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
 if not Toggles.AutoRooms.Value or Library.Unloaded then return end
 if ReplicatedStorage.GameData.LatestRoom.Value == 1000 then
-LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.KeyboardMouse
-if workspace:FindFirstChild("PathFindPartsFolder") then
-workspace.PathFindPartsFolder:ClearAllChildren()
-end
+stopAutoRooms()
 end
 end)
 table.insert(Connections, stuckCheckConnection)
 table.insert(Connections, renderConnection)
 table.insert(Connections, roomConnection)
-else
-LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.KeyboardMouse
-if workspace:FindFirstChild("PathFindPartsFolder") then
-workspace.PathFindPartsFolder:ClearAllChildren()
-end
-LocalPlayer.Character.Humanoid:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position)
-autoRoomsLastPosition = nil
-autoRoomsStuckStartTime = nil
-autoRoomsRestarting = false
-end
-end)
 FloorAnti:AddDivider()
 end
 
