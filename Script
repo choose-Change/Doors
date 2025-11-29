@@ -836,7 +836,7 @@ local function restartAutoRooms()
 if Toggles.AutoRooms.Value then
 Library:Notify("自动房间[DEBUG] 规划路线中...", 3)
 stopAutoRooms()
-task.wait(0.1)
+task.wait()
 startAutoRooms()
 end
 end
