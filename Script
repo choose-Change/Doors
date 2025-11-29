@@ -5497,7 +5497,7 @@ if v.Name == "Eyes" and Options.EntitiesPicker.Value["Eyes"] then
 if OptionNotify == "Doors" then
 Achievement({
 Title = "Eyes",
-Desc = "Eyes已生成",
+Desc = "Eyes 已生成",
 Reason = "不要直视它",
 Image = "rbxassetid://10865377903",
 Text = "WARNING",
@@ -5549,8 +5549,20 @@ Sound()
 end
 
 if v.Name == "MonumentEntity" and Options.EntitiesPicker.Value["Monument"] then
-Notify("Monument 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Monument",
+Desc = "Monument 已生成",
+Reason = "看着它",
+Image = "",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("Monument 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "SeekMovingNewClone" and Options.EntitiesPicker.Value["Seek"] then
@@ -6337,8 +6349,20 @@ end
 if Toggles.EntityNotifys.Value then
 local v = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]:FindFirstChild("Groundskeeper",true)
 if v and Options.EntitiesPicker.Value["Groundskeeper"] then
-Notify("Groundskeeper 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Groundskeeper",
+Desc = "Groundskeeper 已生成",
+Reason = "不要踩踏草坪",
+Image = "",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Notify("Groundskeeper 已生成", 3)
 Sound()
+end
 end
 end
 
