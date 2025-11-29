@@ -772,6 +772,10 @@ Text = "自动房间",
 Default = false
 })
 FloorAnti:AddLabel('不要开启穿墙',true)
+local autoRoomsLastPosition = nil
+local autoRoomsStuckStartTime = nil
+local autoRoomsStuckThreshold = 2
+local autoRoomsRestarting = false
 Toggles.AutoRooms:OnChanged(function(Value)
 if Value then
 LocalPlayer.DevComputerMovementMode = Enum.DevComputerMovementMode.Scriptable
@@ -783,6 +787,9 @@ end
 if LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Modules:FindFirstChild("A90") then
 LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Modules.A90.Name = "lol"
 end
+autoRoomsLastPosition = LocalPlayer.Character.HumanoidRootPart.Position
+autoRoomsStuckStartTime = nil
+autoRoomsRestarting = false
 task.spawn(function()
 while Toggles.AutoRooms.Value and not Library.Unloaded do
 local Destination = getPath()
@@ -818,6 +825,32 @@ end
 end
 task.wait()
 end
+end)
+local stuckCheckConnection = RunService.Heartbeat:Connect(function()
+if not Toggles.AutoRooms.Value or Library.Unloaded or autoRoomsRestarting then return end
+local currentPosition = LocalPlayer.Character.HumanoidRootPart.Position
+if autoRoomsLastPosition then
+local distanceMoved = (currentPosition - autoRoomsLastPosition).Magnitude
+if distanceMoved < 1 then
+if not autoRoomsStuckStartTime then
+autoRoomsStuckStartTime = tick()
+else
+local stuckDuration = tick() - autoRoomsStuckStartTime
+if stuckDuration >= autoRoomsStuckThreshold then
+autoRoomsRestarting = true
+Library:Notify("自动房间[DEBUG] 规划路线中...", 3)
+Toggles.AutoRooms:SetValue(false)
+task.wait(0.1)
+Toggles.AutoRooms:SetValue(true)
+autoRoomsStuckStartTime = nil
+autoRoomsRestarting = false
+end
+end
+else
+autoRoomsStuckStartTime = nil
+end
+end
+autoRoomsLastPosition = currentPosition
 end)
 local renderConnection = RunService.RenderStepped:Connect(function()
 if not Toggles.AutoRooms.Value or Library.Unloaded then return end
@@ -863,6 +896,7 @@ workspace.PathFindPartsFolder:ClearAllChildren()
 end
 end
 end)
+table.insert(Connections, stuckCheckConnection)
 table.insert(Connections, renderConnection)
 table.insert(Connections, roomConnection)
 else
@@ -871,6 +905,9 @@ if workspace:FindFirstChild("PathFindPartsFolder") then
 workspace.PathFindPartsFolder:ClearAllChildren()
 end
 LocalPlayer.Character.Humanoid:MoveTo(LocalPlayer.Character.HumanoidRootPart.Position)
+autoRoomsLastPosition = nil
+autoRoomsStuckStartTime = nil
+autoRoomsRestarting = false
 end
 end)
 FloorAnti:AddDivider()
