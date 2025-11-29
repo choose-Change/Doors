@@ -144,6 +144,46 @@ Options = Library.Options
 Toggles = Library.Toggles
 local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/MSESP/refs/heads/main/source.luau"))()
 
+local Achievement = (function()
+local Players = game:GetService("Players")
+local TS = game:GetService("TweenService")
+local Plr = Players.LocalPlayer
+return function(data)
+task.spawn(function()
+local frame = Plr.PlayerGui.GlobalUI.AchievementsHolder.Achievement:Clone()
+frame.Name = "LiveAchievement"
+frame.Frame.Details.Title.Text = data.Title
+frame.Frame.Details.Desc.Text = data.Desc
+frame.Frame.Details.Reason.Text = data.Reason
+frame.Frame.ImageLabel.Image = data.Image
+frame.Size = UDim2.new(0, 0, 0, 0)
+frame.Frame.Position = UDim2.new(1.1, 0, 0, 0)
+frame.Visible = true
+frame.Parent = Plr.PlayerGui.GlobalUI.AchievementsHolder
+if data.Text then
+frame.Frame.TextLabel.Text = data.Text
+end
+if data.TextColor then
+frame.Frame.TextLabel.TextColor3 = data.TextColor
+end
+if data.UIStrokeColor then
+frame.Frame.UIStroke.Color = data.UIStrokeColor
+end
+frame.Sound:Play()
+frame:TweenSize(UDim2.new(1, 0, 0.2, 0), "In", "Quad", 0.8, true)
+task.wait(0.8)
+frame.Frame:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.5, true)
+TS:Create(frame.Frame.Glow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { ImageTransparency = 1 }):Play()
+task.wait(3)
+frame.Frame:TweenPosition(UDim2.new(1.1, 0, 0, 0), "In", "Quad", 0.5, true)
+task.wait(0.5)
+frame:TweenSize(UDim2.new(1, 0, -0.1, 0), "InOut", "Quad", 0.5, true)
+task.wait(0.5)
+frame:Destroy()
+end)
+end
+end)()
+
 local ESPConfig = {
 Tracer = {
 Enabled = true,
@@ -1602,6 +1642,16 @@ notifyChatConnection:Disconnect()
 notifyChatConnection = nil
 end
 notifyChatRunning = false
+NySet:AddDivider()
+
+NySet:AddDropdown("NotificationStyle", {
+    Values = {"Obsidian", "Doors"},
+    Default = "Obsidian",
+    Text = "通知样式",
+Callback = function(Value)
+OptionNotify = Value
+end,
+})
 
 MiscBox:AddButton({
      Text = "重置人物",
@@ -5343,46 +5393,154 @@ end)
 table.insert(Connections,workspace.ChildAdded:Connect(function(v)
 if  Toggles.EntityNotifys.Value then  
 if v.Name == "RushMoving" and Options.EntitiesPicker.Value["Rush"] then
-Notify("Rush 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Rush",
+Desc = "Rush 已生成",
+Reason = "快去寻找躲藏点",
+Image = "rbxassetid://11102256553",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("Rush 已生成", 3)
 Sound()
 end
+end
 if v.Name == "BackdoorRush" and Options.EntitiesPicker.Value["Blitz"] then
-Notify("Blitz 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Blitz",
+Desc = "Blitz 已生成",
+Reason = "快去寻找躲藏点",
+Image = "rbxassetid://140595207306444",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("Blitz 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "BackdoorLookman" and Options.EntitiesPicker.Value["Lookman"] then
-Notify("Lookman 已生成", 3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Lookman",
+Desc = "Lookman 已生成",
+Reason = "不要直视它",
+Image = "rbxassetid://16764872677",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("Lookman 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "AmbushMoving" and Options.EntitiesPicker.Value["Ambush"] then
-Notify("Ambush 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Ambush",
+Desc = "Ambush 已生成",
+Reason = "快去寻找躲藏点",
+Image = "rbxassetid://10938726652",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("Ambush 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "A60" and Options.EntitiesPicker.Value["A-60"] then
-Notify("A-60 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "A-60",
+Desc = "A-60 已生成",
+Reason = "快去寻找躲藏点",
+Image = "rbxassetid://12350986086",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("A-60 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "A120" and Options.EntitiesPicker.Value["A-120"] then
-Notify("A-120 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "A-120",
+Desc = "A-120 已生成",
+Reason = "快去寻找躲藏点",
+Image = "rbxassetid://12351008553",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("A-120 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "Eyes" and Options.EntitiesPicker.Value["Eyes"] then
-Notify("Eyes 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Eyes",
+Desc = "Eyes已生成",
+Reason = "不要直视它",
+Image = "rbxassetid://10865377903",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("Eyes 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "GlitchRush" and Options.EntitiesPicker.Value["GlitchRush"] then
-Notify("GlitchRush 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "GlitchRush",
+Desc = "GlitchRush 已生成",
+Reason = "快去寻找躲藏点",
+Image = "rbxassetid://11102256553",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("GlitchRush 已生成", 3)
 Sound()
 end
+end
 if v.Name == "GlitchAmbush" and Options.EntitiesPicker.Value["GlitchAmbush"] then
-Notify("GlitchAmbush 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "GlitchAmbush",
+Desc = "GlitchAmbush 已生成",
+Reason = "快去寻找躲藏点",
+Image = "rbxassetid://10938726652",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("GlitchAmbush 已生成", 3)
 Sound()
+end
 end
 
 if v.Name == "Groundskeeper" and Options.EntitiesPicker.Value["Groundskeeper"] then
@@ -5396,8 +5554,20 @@ Sound()
 end
 
 if v.Name == "SeekMovingNewClone" and Options.EntitiesPicker.Value["Seek"] then
-Notify("Seek发射器 已生成",3)
+if OptionNotify == "Doors" then
+Achievement({
+Title = "Seek发射器",
+Desc = "Seek发射器 已生成",
+Reason = "下一门有Seek",
+Image = "rbxassetid://109124151043322",
+Text = "WARNING",
+TextColor = Color3.fromRGB(255, 0, 0),
+UIStrokeColor = Color3.fromRGB(255, 0, 0)
+})
+else
+Library:Notify("Seek发射器 已生成", 3)
 Sound()
+end
 end
 
 end
