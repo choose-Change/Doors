@@ -1574,10 +1574,8 @@ Callback = function(Value)
 if Value then
 if not notifyChatRunning then
 notifyChatRunning = true
-
 local TextChatService = game:GetService("TextChatService")
 local Workspace = game:GetService("Workspace")
-
 local entityNameMap = {
 Rush = "Rush",
 Ambush = "Ambush", 
@@ -1590,7 +1588,6 @@ Monument = "Monument",
 Groundskeeper = "Groundskeeper",
 Seek = "Seek发射器"
 }
-
 local entityModelMap = {
 Rush = "RushMoving",
 Ambush = "AmbushMoving",
@@ -1603,13 +1600,15 @@ Monument = "MonumentEntity",
 Groundskeeper = "Groundskeeper",
 Seek = "SeekMovingNewClone"
 }
-
 local detectedInstances = {}
-
+local lastCheckTime = 0
+local checkInterval = 0.5
+local selectedEntities = {}
 for entityName, modelName in pairs(entityModelMap) do
-detectedInstances[modelName] = {}
+if Options.EntitiesPicker.Value[entityName] then
+selectedEntities[modelName] = entityNameMap[entityName] or entityName
 end
-
+end
 local function sendMessage(message)
 if TextChatService and TextChatService.TextChannels then
 local channel = TextChatService.TextChannels:FindFirstChild("RBXGeneral")
@@ -1618,55 +1617,78 @@ channel:SendAsync(message)
 end
 end
 end
-
 local function checkForEntities()
 if not notifyChatRunning then return end
-
-local children = Workspace:GetDescendants()
-
-for _, child in ipairs(children) do
-if child:IsA("Model") then
 for entityName, modelName in pairs(entityModelMap) do
 if Options.EntitiesPicker.Value[entityName] then
-if child.Name == modelName then
-if not detectedInstances[modelName][child] then
-detectedInstances[modelName][child] = true
-local displayName = entityNameMap[entityName] or entityName
-
+selectedEntities[modelName] = entityNameMap[entityName] or entityName
+else
+selectedEntities[modelName] = nil
+end
+end
+for modelName, displayName in pairs(selectedEntities) do
+local entity = Workspace:FindFirstChild(modelName)
+if entity and entity:IsA("Model") then
+if not detectedInstances[entity] then
+detectedInstances[entity] = true
 local messageFormat = Options.ChatMessageFormat.Value or "% 已生成"
 local chatMessage = messageFormat:gsub("%%", displayName)
-
+sendMessage(chatMessage)
+end
+end
+end
+for entity in pairs(detectedInstances) do
+if not entity:IsDescendantOf(Workspace) then
+detectedInstances[entity] = nil
+end
+end
+end
+notifyChatConnection = game:GetService("RunService").Heartbeat:Connect(function()
+if not notifyChatRunning then
+return
+end
+local currentTime = tick()
+if currentTime - lastCheckTime >= checkInterval then
+lastCheckTime = currentTime
+checkForEntities()
+end
+end)
+local entityAddedConnection = Workspace.ChildAdded:Connect(function(child)
+if not notifyChatRunning then return end
+task.wait(0.1)
+for modelName, displayName in pairs(selectedEntities) do
+if child.Name == modelName and child:IsA("Model") then
+if not detectedInstances[child] then
+detectedInstances[child] = true
+local messageFormat = Options.ChatMessageFormat.Value or "% 已生成"
+local chatMessage = messageFormat:gsub("%%", displayName)
 sendMessage(chatMessage)
 end
 break
 end
 end
-end
-end
-end
-
-for modelName, instances in pairs(detectedInstances) do
-for instance in pairs(instances) do
-if not instance:IsDescendantOf(Workspace) then
-detectedInstances[modelName][instance] = nil
-end
-end
-end
-end
-
-notifyChatConnection = game:GetService("RunService").Heartbeat:Connect(function()
-if not notifyChatRunning then
-return
-end
-checkForEntities()
 end)
+local entityRemovedConnection = Workspace.ChildRemoved:Connect(function(child)
+detectedInstances[child] = nil
+end)
+notifyChatConnections = {
+notifyChatConnection,
+entityAddedConnection,
+entityRemovedConnection
+}
 end
 else
 notifyChatRunning = false
-if notifyChatConnection then
-notifyChatConnection:Disconnect()
-notifyChatConnection = nil
+if notifyChatConnections then
+for _, connection in ipairs(notifyChatConnections) do
+if connection then
+connection:Disconnect()
 end
+end
+notifyChatConnections = nil
+end
+detectedInstances = {}
+selectedEntities = {}
 end
 end
 })
@@ -1683,7 +1705,6 @@ NySet:AddInput("ChatMessageFormat", {
 
 local notifyChatRunning = false
 local notifyChatConnection = nil
-
 if notifyChatConnection then
 notifyChatConnection:Disconnect()
 notifyChatConnection = nil
@@ -1705,15 +1726,10 @@ MiscBox:AddButton({
 DoubleClick = true,
      Func = function()
 if Disable4 == false then
-
 replicatesignal(LocalPlayer.Kill)
-
 elseif Disable4 == true then
-
 LocalPlayer.Character.Humanoid.Health = 0
-
 end
-
 end
 })
 
