@@ -787,7 +787,7 @@ task.spawn(function()
 while Toggles.AutoRooms.Value and not Library.Unloaded do
 local Destination = getPath()
 if Destination and ReplicatedStorage.GameData.LatestRoom.Value ~= 1000 then
-local path = PathfindingService:CreatePath({ WaypointSpacing = 2, AgentRadius = 0.6, AgentCanJump = false })
+local path = PathfindingService:CreatePath({ WaypointSpacing = 1, AgentRadius = 1.5, AgentCanJump = false })
 path:ComputeAsync(LocalPlayer.Character.HumanoidRootPart.Position - Vector3.new(0,2.5,0), Destination.Position)
 local Waypoints = path:GetWaypoints()
 if path.Status ~= Enum.PathStatus.NoPath then
