@@ -72,6 +72,14 @@ end
 local Executor = identifyexecutor() or getexecutorname() or "Unknown"
 local Library = loadstring(game:HttpGet(repo..'Library.lua'))()
 
+Window = Library:CreateWindow({
+Title = '💠 StarRing V3',
+Footer = "QQ群1070767561",
+Center = true,
+NotifySide = "Right",
+AutoShow = true
+})
+
 if KEY ~= "FREE_群1070767561" then
 Library:Notify("卡密错误，获取卡密加入QQ群<font color=\"rgb(135,206,250)\">1070767561</font>", 20)
 return
@@ -624,13 +632,6 @@ end)
 local LatestRoom = ReplicatedStorage.GameData.LatestRoom.Value
 
 local Connections = {}
-
-Window = Library:CreateWindow({
-Title = '💠 StarRing V3',
-Footer = "QQ群1070767561",
-Center = true,
-AutoShow = true
-})
 
 if UIStyle == "LinoriaLib" then
 Tabs = {
