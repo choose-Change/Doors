@@ -1008,10 +1008,8 @@ end
 
 if queue_on_teleport then
 
-Library:Notify("现在开始等待",2)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/TheHunterSolo1/Op-Ninja-Simulator-/Main/M1reset"))()
-
-queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/TheHunterSolo1/Op-Ninja-Simulator-/Main/M1reset"))()')
+Library:Notify("死亡农场开始工作",3)
+loadstring(game:HttpGet("https://raw.msdoors.xyz/deathfarm"))()
 
 end
 
