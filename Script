@@ -1529,6 +1529,71 @@ end
 })
 Camera:AddDivider()
 
+player = Players.LocalPlayer
+local offsetX, offsetY, offsetZ = 0, 0, 0
+local heartbeatConnection = nil
+local thingy = nil
+
+Camera:AddToggle('ToolOffset', {
+Text = '视图模型偏移',
+Default = false,
+Callback = function(enabled)
+local gui = player:FindFirstChild("PlayerGui")
+if not gui then return end
+local moduleGui = gui:FindFirstChild("MainUI")
+if not moduleGui then return end
+moduleGui = moduleGui:FindFirstChild("Initiator")
+if not moduleGui then return end
+moduleGui = moduleGui:FindFirstChild("Main_Game")
+if not moduleGui then return end
+thingy = require(moduleGui)
+if enabled then
+if heartbeatConnection then heartbeatConnection:Disconnect() end
+heartbeatConnection = RunService.Heartbeat:Connect(function()
+thingy.tooloffset = Vector3.new(offsetX, offsetY, offsetZ)
+end)
+else
+if heartbeatConnection then
+heartbeatConnection:Disconnect()
+heartbeatConnection = nil
+end
+if thingy then
+thingy.tooloffset = Vector3.new(0, 0, 0)
+end
+end
+end
+})
+
+Camera:AddSlider('ToolOffsetX', {
+	Text = 'X',
+	Min = -10,
+	Max = 10,
+	Default = 0,
+	Rounding = 2,
+	Compact = true,
+Callback = function(v) offsetX = v end,
+})
+
+Camera:AddSlider('ToolOffsetY', {
+	Text = 'Y',
+	Min = -10,
+	Max = 10,
+	Default = 0,
+	Rounding = 2,
+	Compact = true,
+Callback = function(v) offsetY = v end,
+})
+
+Camera:AddSlider('ToolOffsetZ', {
+	Text = 'Z',
+	Min = -10,
+	Max = 10,
+	Default = 0,
+	Rounding = 2,
+	Compact = true,
+Callback = function(v) offsetZ = v end,
+})
+Camera:AddDivider()
 
 local SpectateTable = {
 RushMoving = true,
