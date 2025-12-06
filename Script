@@ -1776,8 +1776,8 @@ notifyChatRunning = false
 NySet:AddDivider()
 
 NySet:AddDropdown("NotificationStyle", {
-    Values = {"Obsidian", "Doors"},
-    Default = "Obsidian",
+    Values = {"Library", "Doors"},
+    Default = "Library",
     Text = "通知样式",
 Callback = function(Value)
 OptionNotify = Value
@@ -2761,7 +2761,7 @@ Automation:AddToggle('AutoCloset',{
 		Default = 'Q',
 		SyncToggleState = true,
 		Mode = 'Toggle',
-		Text = '自动躲藏',
+		Text = '<font color=\"rgb(255,0,0)\">自动躲藏</font>',
 		NoUI = false,
 		Callback = function(Value)
 		end,
