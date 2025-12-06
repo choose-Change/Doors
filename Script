@@ -2796,7 +2796,7 @@ Automation:AddToggle('AutoCloset',{
 		Default = 'Q',
 		SyncToggleState = true,
 		Mode = 'Toggle',
-		Text = '<font color=\"rgb(255,0,0)\">自动躲藏</font>',
+		Text = '自动躲藏',
 		NoUI = false,
 		Callback = function(Value)
 		end,
