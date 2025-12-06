@@ -5755,6 +5755,14 @@ if v.Name == "AmbushMoving" then
 addESP(v,"Ambush")
 end
 
+if v.Name == "GlitchRush" then
+addESP(v,"GlitchRush")
+end
+
+if v.Name == "GlitchAmbush" then
+addESP(v,"GlitchAmbush")
+end
+
 if v.Name == "A60" then
 addESP(v,"A-60")
 end
