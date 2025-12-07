@@ -1013,14 +1013,14 @@ replicatesignal(LocalPlayer.Kill)
 elseif Disable4 == true then
 LocalPlayer.Character.Humanoid.Health = 0
 end
-task.wait(0.5)
+task.wait()
 if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 local StatisticsRemote = ReplicatedStorage.RemotesFolder:FindFirstChild("Statistics")
 if StatisticsRemote then
 StatisticsRemote:FireServer()
 end
 end
-task.wait(1)
+task.wait()
 end
 end)
 else
