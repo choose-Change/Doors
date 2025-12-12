@@ -77,14 +77,6 @@ Library:Notify("卡密错误，获取卡密加入QQ群<font color=\"rgb(135,206,
 return
 end
 
-Window = Library:CreateWindow({
-Title = '💠 StarRing V3',
-Footer = "QQ群1070767561",
-Center = true,
-NotifySide = "Right",
-AutoShow = true
-})
-
 Library.ForceCheckbox = true
 
 Library:Notify("正在加载 StarRing | Doors",5)
@@ -615,6 +607,14 @@ end)
 local LatestRoom = ReplicatedStorage.GameData.LatestRoom.Value
 
 local Connections = {}
+
+Window = Library:CreateWindow({
+Title = '💠 StarRing V3',
+Footer = "QQ群1070767561",
+Center = true,
+NotifySide = "Right",
+AutoShow = true
+})
 
 if UIStyle == "LinoriaLib" then
 Tabs = {
