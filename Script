@@ -604,6 +604,79 @@ end
 end
 
 end)
+
+local function checkFunctionSupport(funcName)
+local success, result = pcall(function()
+if funcName == "hookmetamethod" then
+return type(hookmetamethod) == "function"
+elseif funcName == "newcclosure" then
+return type(newcclosure) == "function"
+elseif funcName == "getgenv" then
+return type(getgenv) == "function"
+elseif funcName == "getrenv" then
+return type(getrenv) == "function"
+elseif funcName == "getgc" then
+return type(getgc) == "function"
+elseif funcName == "getreg" then
+return type(getreg) == "function"
+elseif funcName == "setclipboard" then
+return type(setclipboard) == "function"
+elseif funcName == "setfpscap" then
+return type(setfpscap) == "function"
+elseif funcName == "isnetworkowner" then
+return type(isnetworkowner) == "function"
+elseif funcName == "setsimulationradius" then
+return type(setsimulationradius) == "function"
+elseif funcName == "fireproximityprompt" then
+return type(fireproximityprompt) == "function"
+elseif funcName == "firetouchinterest" then
+return type(firetouchinterest) == "function"
+elseif funcName == "fireclickdetector" then
+return type(fireclickdetector) == "function"
+elseif funcName == "queue_on_teleport" then
+return type(queue_on_teleport) == "function"
+elseif funcName == "identifyexecutor" then
+return type(identifyexecutor) == "function"
+elseif funcName == "getexecutorname" then
+return type(getexecutorname) == "function"
+elseif funcName == "checkcaller" then
+return type(checkcaller) == "function"
+elseif funcName == "hookfunction" then
+return type(hookfunction) == "function"
+elseif funcName == "replaceclosure" then
+return type(replaceclosure) == "function"
+elseif funcName == "firesignal" then
+return type(firesignal) == "function"
+elseif funcName == "replicatesignal" then
+return type(replicatesignal) == "function"
+elseif funcName == "getnamecallmethod" then
+return type(getnamecallmethod) == "function"
+elseif funcName == "getconnections" then
+return type(getconnections) == "function"
+elseif funcName == "getthreadidentity" then
+return type(getthreadidentity) == "function"
+elseif funcName == "setthreadidentity" then
+return type(setthreadidentity) == "function"
+elseif funcName == "getupvalue" then
+return type(getupvalue) == "function"
+elseif funcName == "setupvalue" then
+return type(setupvalue) == "function"
+elseif funcName == "getconstants" then
+return type(getconstants) == "function"
+elseif funcName == "setconstant" then
+return type(setconstant) == "function"
+elseif funcName == "getrawmetatable" then
+return type(getrawmetatable) == "function"
+elseif funcName == "setrawmetatable" then
+return type(setrawmetatable) == "function"
+elseif funcName == "cloneref" then
+return type(cloneref) == "function"
+end
+return false
+end)
+return success and result
+end
+
 local LatestRoom = ReplicatedStorage.GameData.LatestRoom.Value
 
 local Connections = {}
@@ -618,6 +691,7 @@ AutoShow = true
 
 if UIStyle == "LinoriaLib" then
 Tabs = {
+Homepage = Window:AddTab("主页"),
 Player = Window:AddTab("玩家"),
 Exploits = Window:AddTab("漏洞"),
 Visuals = Window:AddTab("视觉"),
@@ -628,6 +702,11 @@ Addons = Window:AddTab("插件"),
 }
 else
 Tabs = {
+Homepage = Window:AddTab({
+Name = "主页",
+Description = "用户信息", 
+Icon = "house"
+}),
 Player = Window:AddTab({
 Name = "玩家",
 Description = "基础功能", 
@@ -666,6 +745,9 @@ Icon = "boxes"
 }
 end
 
+local User = Tabs.Homepage:AddLeftGroupbox("用户信息")
+
+local InjectorFunctionsBox = Tabs.Homepage:AddRightGroupbox("注入器函数支持")
 
 local Movement = Tabs.Player:AddLeftGroupbox("移动")
 
@@ -718,6 +800,56 @@ Contributors:AddLabel("[<font color=\"rgb(73,230,133)\">千change</font>] 所有
 local TheScript = Tabs.Info:AddRightGroupbox("致谢","user-star")
 TheScript:AddLabel("[<font color=\"rgb(73,230,133)\">mstudio45</font>] 提供UI库",true)
 TheScript:AddLabel("[<font color=\"rgb(73,230,133)\">mstudio45</font>] 提供MSESP库",true)
+
+local success, result = pcall(function()
+local thumbnailType = Enum.ThumbnailType.HeadShot
+local thumbnailSize = Enum.ThumbnailSize.Size100x100
+local content, isReady = Players:GetUserThumbnailAsync(LocalPlayer.UserId, thumbnailType, thumbnailSize)
+return content
+end)
+User:AddImage("UserImage", {
+Image = success and result or "rbxassetid://",
+Callback = function(image)
+end,
+})
+User:AddLabel("用户: " .. LocalPlayer.DisplayName .. " (" .. LocalPlayer.Name .. ")", true)
+User:AddLabel("注入器: " .. Executor, true)
+User:AddButton({
+Text = "复制玩家用户ID",
+Func = function()
+local userId = tostring(LocalPlayer.UserId)
+if setclipboard then
+setclipboard(userId)
+else
+Library:Notify("无法访问剪贴板，用户ID: " .. userId, 10)
+end
+end
+})
+
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("hookmetamethod") and "✅" or "❌") .. " hookmetamethod", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("newcclosure") and "✅" or "❌") .. " newcclosure", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("cloneref") and "✅" or "❌") .. " cloneref", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("isnetworkowner") and "✅" or "❌") .. " isnetworkowner", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("setsimulationradius") and "✅" or "❌") .. " setsimulationradius", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("setclipboard") and "✅" or "❌") .. " setclipboard", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("setfpscap") and "✅" or "❌") .. " setfpscap", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getgenv") and "✅" or "❌") .. " getgenv", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getrenv") and "✅" or "❌") .. " getrenv", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getgc") and "✅" or "❌") .. " getgc", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getreg") and "✅" or "❌") .. " getreg", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("hookfunction") and "✅" or "❌") .. " hookfunction", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("replaceclosure") and "✅" or "❌") .. " replaceclosure", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("checkcaller") and "✅" or "❌") .. " checkcaller", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getnamecallmethod") and "✅" or "❌") .. " getnamecallmethod", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getrawmetatable") and "✅" or "❌") .. " getrawmetatable", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("setrawmetatable") and "✅" or "❌") .. " setrawmetatable", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getupvalue") and "✅" or "❌") .. " getupvalue", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("setupvalue") and "✅" or "❌") .. " setupvalue", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getconstants") and "✅" or "❌") .. " getconstants", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("setconstant") and "✅" or "❌") .. " setconstant", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("firesignal") and "✅" or "❌") .. " firesignal", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("replicatesignal") and "✅" or "❌") .. " replicatesignal", true)
+InjectorFunctionsBox:AddLabel((checkFunctionSupport("getconnections") and "✅" or "❌") .. " getconnections", true)
 
 if Floor.Value == "Rooms" then
 function getLocker()
@@ -1174,6 +1306,16 @@ ReachBox:AddSlider("DoorReachRange", {
      end,      
 })
 
+Effect:AddToggle('AntiJumpscares',{
+     Text = "无跳杀",
+     Default = false,
+     Callback = function(Value)
+local JumpscaresModule = RemoteListener:FindFirstChild("Jumpscares") or RemoteListener:FindFirstChild("_Jumpscares")
+if JumpscaresModule then
+JumpscaresModule.Name = Value and "_Jumpscares" or "Jumpscares"
+end
+end
+})
 
 Effect:AddToggle('NoCutscenes',{
      Text = "无过场动画",
@@ -5373,7 +5515,6 @@ end)
 
 table.insert(Connections,LocalPlayer.CharacterAdded:Connect(function()
 task.wait(2)
-Library:Notify("设置所有",4)
 
 if Toggles.EnableJump.Value then
 LocalPlayer.Character:SetAttribute("CanJump",true)
@@ -5437,101 +5578,6 @@ base.Transparency = 0.99
 end
 ESPLibrary:AddESP(entity,label,EntityColor)
 end
-
-Toggles.EntityNotifys:OnChanged(function(Value)
-
-if Value then
-for _, v in ipairs(workspace:GetChildren()) do
-if v.Name == "RushMoving" and Options.EntitiesPicker.Value["Rush"] then
-Notify("Rush 已生成",3)
-Sound()
-end
-if v.Name == "BackdoorRush" and Options.EntitiesPicker.Value["Blitz"] then
-Notify("Blitz 已生成",3)
-Sound()
-end
-
-if v.Name == "BackdoorLookman" and Options.EntitiesPicker.Value["Lookman"] then
-Notify("Lookman 已生成", 3)
-Sound()
-end
-
-if v.Name == "AmbushMoving" and Options.EntitiesPicker.Value["Ambush"] then
-Notify("Ambush 已生成",3)
-Sound()
-end
-
-if v.Name == "A60" and Options.EntitiesPicker.Value["A-60"] then
-Notify("A-60 已生成",3)
-Sound()
-end
-
-if v.Name == "A120" and Options.EntitiesPicker.Value["A-120"] then
-Notify("A-120 已生成",3)
-Sound()
-end
-
-if v.Name == "Eyes" and Options.EntitiesPicker.Value["Eyes"] then
-Notify("Eyes 已生成",3)
-Sound()
-end
-
-if v.Name == "GlitchRush" and Options.EntitiesPicker.Value["GlitchRush"] then
-Notify("GlitchRush 已生成",3)
-Sound()
-end
-if v.Name == "GlitchAmbush" and Options.EntitiesPicker.Value["GlitchAmbush"] then
-Notify("GlitchAmbush 已生成",3)
-Sound()
-end
-
-if v.Name == "Groundskeeper" and Options.EntitiesPicker.Value["Groundskeeper"] then
-Notify("Groundskeeper 已生成",3)
-Sound()
-end
-
-if v.Name == "MonumentEntity" and Options.EntitiesPicker.Value["Monument"] then
-Notify("Monument 已生成",3)
-Sound()
-end
-
-end
-if Toggles.EntitesESP.Value then
-if v.Name == "RushMoving" then
-addESP(v,"Rush")
-end
-
-if v.Name == "AmbushMoving" then
-addESP(v,"Ambush")
-end
-
-if v.Name == "A60" then
-addESP(v,"A-60")
-end
-
-if v.Name == "A120" then
-addESP(v,"A-120")
-end
-
-if v.Name == "Eyes" then
-addESP(v,"Eyes")
-end
-
-if v.Name == "BackdoorLookman" then
-addESP(v,"Lookman")
-end
-
-if v.Name == "Groundskeeper" then
-addESP(v, "Groundskeeper")
-end
-
-if v.Name == "MonumentEntity" then
-addESP(v:WaitForChild("Top"),"Monument")
-end
-end
-end
-
-end)
 
 table.insert(Connections,workspace.ChildAdded:Connect(function(v)
 if  Toggles.EntityNotifys.Value then  
@@ -7112,6 +7158,10 @@ end
 local SpiderModule = ClientModules.EntityModules:FindFirstChild("_SpiderJumpscare")
 if SpiderModule then
 SpiderModule.Name = "SpiderJumpscare"
+end
+local JumpscaresModule = RemoteListener:FindFirstChild("_Jumpscares")
+if JumpscaresModule then
+JumpscaresModule.Name = "Jumpscares"
 end
 local GlitchModule = ClientModules.EntityModules:FindFirstChild("_Glitch")
 if GlitchModule then
