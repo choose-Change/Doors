@@ -2934,29 +2934,24 @@ local autoGlitchConnection = nil
 Automation:AddToggle('AutoGlitch', {
     Text = "自动故障",
     Default = false,
-    Callback = function(Value)
-        autoGlitchEnabled = Value
-        
-        if autoGlitchEnabled then
-            autoGlitchConnection = RunService.Heartbeat:Connect(function()
-                if autoGlitchEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local character = LocalPlayer.Character
-                    local humanoidRootPart = character.HumanoidRootPart
-                    
-                    local lookVector = humanoidRootPart.CFrame.LookVector
-                    
-                    local teleportPosition = humanoidRootPart.Position + (lookVector * 10000)
-                    
-                    character:PivotTo(CFrame.new(teleportPosition))
-                end
-            end)
-        else
-            if autoGlitchConnection then
-                autoGlitchConnection:Disconnect()
-                autoGlitchConnection = nil
-            end
-        end
-    end
+Callback = function(Value)
+autoGlitchEnabled = Value
+if autoGlitchEnabled then
+autoGlitchConnection = RunService.Heartbeat:Connect(function()
+if autoGlitchEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+local character = LocalPlayer.Character
+local humanoidRootPart = character.HumanoidRootPart
+local teleportPosition = humanoidRootPart.Position - Vector3.new(0, -10, 0)
+character:PivotTo(CFrame.new(teleportPosition))
+end
+end)
+else
+if autoGlitchConnection then
+autoGlitchConnection:Disconnect()
+autoGlitchConnection = nil
+end
+end
+end
 })
 
 Movement:AddToggle('Noacceleration',{
@@ -3731,33 +3726,29 @@ function addFake(prompt, mode)
 end
 
 local function scanPrompts(validParents, validNames)
-	local t = {}
-	for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
-		if v:IsA("ProximityPrompt") and (validParents[v.Parent.Name] or validNames[v.Name]) then
-			table.insert(t, v)
-		end
-	end
-	return t
+local t = {}
+for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
+if v:IsA("ProximityPrompt") and (validParents[v.Parent.Name] or validNames[v.Name]) then
+table.insert(t, v)
 end
-
- function cleanupEnableReal()
-	for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
-		if v.Name == "FakePrompt" and v.Parent then
-			v:Destroy()
-		end
-		if v:IsA("ProximityPrompt") and v.Name ~= "FakePrompt" then
-			pcall(function()
-				v.Enabled = true
-				v.ClickablePrompt = true
+end
+return t
+end
+function cleanupEnableReal()
+for _, v in ipairs(Workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "FakePrompt" and v.Parent then
+v:Destroy()
+end
+if v:IsA("ProximityPrompt") and v.Name ~= "FakePrompt" then
+pcall(function()
+v.Enabled = true
+v.ClickablePrompt = true
 if v:GetAttribute("HasFake") == true then
-
 v:SetAttribute("HasFake",nil)
-
 end
-
-			end)
-		end
-	end
+end)
+end
+end
 end
 
  LockpickParents = { ChestBoxLocked = true, Locker_Small_Locked = true, Toolbox_Locked = true }
